@@ -1,0 +1,2126 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ตัวช่วยจัดแพทเทิร์นกระจก v2 Ultra</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Global styles: Glassmorphism, dark/light themes */
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--glass:rgba(255,255,255,0.04);--accent:#7c3aed}
+    [data-theme="light"]{--bg:#f6f8fb;--card:#ffffff;--muted:#475569;--glass:rgba(0,0,0,0.03);--accent:#6b21a8}
+    html,body{height:100%}
+    body{background:linear-gradient(180deg,rgba(124,58,237,0.12),transparent),var(--bg);color:#e6eef8;font-family:Inter,Segoe UI,system-ui,Arial,sans-serif}
+    .glass-card{backdrop-filter:blur(6px);background:var(--glass);border:1px solid rgba(255,255,255,0.06);box-shadow:0 6px 18px rgba(2,6,23,0.6);border-radius:12px}
+    .muted{color:var(--muted)}
+    .rounded-sm{border-radius:8px}
+    .sidebar{width:280px}
+    .app-header{height:64px}
+    .small-muted{font-size:0.85rem;color:var(--muted)}
+    .animate-pop{transition:transform .16s ease,box-shadow .16s ease}
+    .animate-pop:active{transform:scale(.995)}
+    table.data-table td, table.data-table th{vertical-align:middle}
+    @media (max-width:991px){.sidebar{display:none}}
+    /* Visualization styles */
+    .viz-area{margin-top:12px}
+    .viz-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:8px;margin-bottom:10px}
+    .pieces-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+    .piece-box{display:flex;align-items:center;justify-content:center;color:#041124;border-radius:4px;font-size:12px;padding:4px 6px}
+    .piece-badge{background:rgba(0,0,0,0.12);padding:2px 6px;border-radius:999px;font-size:11px;color:#fff;margin-left:6px}
+    @media print{
+      @page{margin:1.5cm 1.2cm;size:A4 portrait}
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      body{background:#fff!important;color:#111!important;font-size:11px!important}
+      /* ซ่อน UI ที่ไม่ต้องพิมพ์ */
+      .navbar,.col-lg-3,#btnPrint,#btnExportExcel,#btnExportPdf,.btn,
+      .hint,.add-row,[class*="addRow"],#detailCard{display:none!important}
+      /* ขยายคอลัมน์ผลลัพธ์เต็มหน้า */
+      .container-fluid{padding:0!important}
+      .row{margin:0!important}
+      .col-lg-9{width:100%!important;max-width:100%!important;flex:0 0 100%!important;padding:0!important}
+      /* หัวรายงาน */
+      .col-lg-9::before{
+        content:"รายงานผลการจัดแพทเทิร์นกระจก";
+        display:block;font-size:15px;font-weight:700;
+        text-align:center;margin-bottom:6px;color:#111
+      }
+      /* การ์ด */
+      .glass-card,.viz-card{
+        border:1px solid #bbb!important;box-shadow:none!important;
+        background:#fff!important;border-radius:4px!important;
+        margin-bottom:10px!important;padding:8px!important
+      }
+      /* ตาราง */
+      table{border-collapse:collapse!important;width:100%!important;font-size:10px!important}
+      th,td{border:1px solid #bbb!important;padding:3px 6px!important;color:#111!important;word-break:break-word}
+      thead tr{background:#e8e8e8!important}
+      .text-danger{color:#b00!important;font-weight:600}
+      .text-success{color:#060!important;font-weight:600}
+      .text-warning{color:#a60!important;font-weight:600}
+      .small-muted{color:#555!important;font-size:10px!important}
+      /* สรุปสถิติ (badge row) */
+      #reportSummary{display:flex!important;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+      #reportSummary .col-6{flex:0 0 48%;max-width:48%;padding:4px!important}
+      /* แผนผังแผ่นกระจก */
+      #reportCard,#visualization{display:block!important}
+      .viz-card{page-break-inside:avoid}
+      /* ป้ายชิ้นงานในภาพ */
+      .piece-box{border:1px solid #666!important;font-size:8px!important;color:#111!important}
+      .piece-badge{background:#444!important;color:#fff!important;font-size:9px!important}
+      /* legend */
+      .legendRow span{border:1px solid #999!important;font-size:9px!important}
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <nav class="navbar navbar-dark bg-transparent px-3 app-header">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <div class="me-2 bg-gradient" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),#2dd4bf)">
+          <i class="bi bi-grid-3x3-gap-fill" style="font-size:18px;color:white"></i>
+        </div>
+        <div class="ms-2">
+          <div style="font-weight:700">ตัวช่วยจัดแพทเทิร์นกระจก</div>
+          <div class="small-muted">v2 Ultra • Hyper-Heuristic + Dead-Space + Beam Search • ออฟไลน์</div>
+        </div>
+      </a>
+      <div class="d-flex gap-2">
+        <button id="themeToggle" class="btn btn-sm btn-outline-light animate-pop" title="สลับธีม"><i class="bi bi-brightness-high"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid mt-4">
+    <div class="row g-3">
+      <div class="col-lg-3">
+        <div class="p-3 glass-card">
+          <h5>ข้อมูลนำเข้า</h5>
+          <p class="small-muted">กรอกขนาดและจำนวนที่ต้องการ (หน่วย: เซนติเมตร)</p>
+          <form id="inputForm" class="row g-2">
+            <div class="col-12">
+              <div class="small-muted">ป้อนขนาดเอง (ซม.)</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label">กว้าง (ซม.)</label>
+              <input id="customW" class="form-control form-control-sm" type="number" step="0.01" min="0" placeholder="กว้าง" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">สูง (ซม.)</label>
+              <input id="customH" class="form-control form-control-sm" type="number" step="0.01" min="0" placeholder="สูง" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">จำนวนที่ต้องการ</label>
+              <input id="needQty" class="form-control form-control-sm" type="number" step="1" value="50" required />
+            </div>
+            <!-- Cut adjustment removed per user request -->
+            <div class="col-12 d-flex gap-2 mt-2">
+              <button id="btnAdd" type="button" class="btn btn-secondary btn-sm">เพิ่มไปที่รายการ</button>
+              <button id="btnOptimize" type="button" class="btn btn-warning btn-sm flex-grow-1">⚡ เพิ่มประสิทธิภาพรวม</button>
+            </div>
+            <div class="col-12 mt-2">
+              <label class="form-label">รายการคำขอ</label>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light"><tr><th>#</th><th>กว้าง (ซม.)</th><th>สูง (ซม.)</th><th>จำนวน</th><th></th></tr></thead>
+                  <tbody id="requestList"></tbody>
+                </table>
+              </div>
+              <div class="d-flex gap-2">
+                <button id="btnClearList" type="button" class="btn btn-outline-danger btn-sm">Clear List</button>
+              </div>
+            </div>
+            <div class="col-12 d-flex gap-2 mt-2">
+              <button id="btnExportExcel" type="button" class="btn btn-sm btn-success w-100"><i class="bi bi-file-earmark-spreadsheet"></i> ส่งออก Excel</button>
+              <button id="btnExportPdf" type="button" class="btn btn-sm btn-danger w-100"><i class="bi bi-file-earmark-pdf"></i> ส่งออก PDF</button>
+            </div>
+            <div class="col-12 mt-2 d-flex gap-2">
+              <button id="btnPrint" type="button" class="btn btn-sm btn-outline-light w-100"><i class="bi bi-printer"></i> พิมพ์รายงาน</button>
+              <button id="rotateSheet" type="button" class="btn btn-sm btn-outline-primary w-100" title="หมุนแผ่น"><i class="bi bi-arrow-repeat"></i> หมุนแผ่น</button>
+            </div>
+            <div id="sheetDimensionsLabel" class="col-12 mt-2 small-muted">แผ่นแม่: 243.84 × 182.88 cm • คำนวณการจัดวางอัตโนมัติ</div>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="col-lg-9">
+        <table style="display:none"><tbody id="resultsBody"></tbody></table>
+        <div id="detailCard" class="card glass-card p-3 mt-3" style="display:none">
+          <div class="d-flex justify-content-between">
+            <h6 class="mb-0">รายละเอียดแพทเทิร์น <span id="detailPattern"></span></h6>
+            <div class="small-muted">สรุปชิ้นงานในชุด</div>
+          </div>
+          <div class="mt-2" id="detailList"></div>
+        </div>
+        <div id="reportCard" class="card glass-card p-3 mt-3" style="display:none">
+          <h6 class="mb-2">รายงานผลการเติมอัตโนมัติ</h6>
+          <div class="row g-2 mb-2" id="reportSummary"></div>
+          <div id="reportLeftover"></div>
+        </div>
+        <div id="visualization" class="viz-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries for export (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <script>
+    // Glass Pattern Optimizer Pro
+    // Single-file app: patterns A1..A50, normalization, search, ranking, export
+
+    // Utility: create element helper
+    function el(tag, attrs={}, children=[]){
+      const node = document.createElement(tag);
+      for(const k in attrs){
+        if(k==='text') node.textContent = attrs[k];
+        else node.setAttribute(k, attrs[k]);
+      }
+      (Array.isArray(children)?children:[children]).forEach(c=>{ if(typeof c==='string') node.appendChild(document.createTextNode(c)); else if(c) node.appendChild(c); });
+      return node;
+    }
+
+    // Holds the latest optimization context so the report can be recomputed
+    // after the user manually edits sheet layouts (add/remove/auto-fill pieces).
+    let lastOptContext = null;
+
+    // Track if sheet is rotated (true: swapped width/height, false: original)
+    let isSheetRotated = false;
+
+    // Selection state for keyboard movement
+    let activePiece = null; // { s: sheetData, pi: pieceIndex, draw: drawFunction, sw: sheetW, sh: sheetH }
+
+    // --- Data: sizes pairs provided by user (width x height) ---
+    const sizesPairs = [
+      [42.80,87.50],[42.80,97.50],[42.80,107.50],[42.90,182.80],[43.00,182.80],[43.05,182.80],[42.7,27.5],
+      [22.27,27.5],[52.7,27.5],[67.7,27.5],[92.7,27.5],
+      [42.7,37.5],[52.7,37.5],[67.7,37.5],[92.7,37.5],
+      [42.7,47.5], [52.7,47.5], [67.7,47.5],
+      [52.7,67.5],[44.6,67.5],
+      [44.60,87.50],[44.60,97.50],[44.60,107.50],[47.50,87.50],[47.50,97.50],[47.50,107.50],
+      [52.70,87.50],[52.70,97.50],[52.70,107.50],[52.80,87.50],[52.80,97.50],[52.80,107.50],
+      [54.20,87.50],[54.20,97.50],[54.20,107.50],[59.60,182.80],[60.80,87.50],[60.80,97.50],[60.80,107.50],
+      [60.90,87.50],[60.90,97.50],[60.90,107.50],[61.00,87.50],[61.00,97.50],[61.00,107.50],[64.60,182.80],
+      [67.70,87.50],[67.70,97.50],[67.70,107.50],[67.80,87.50],[67.80,97.50],[67.80,107.50],[69.60,182.80],
+      [72.60,87.50],[72.60,97.50],[72.60,107.50],[72.70,87.50],[72.70,97.50],[72.70,107.50],[72.80,87.50],[72.80,97.50],[72.80,107.50],
+      [79.60,182.80],[82.70,87.50],[82.70,97.50],[82.70,107.50],[87.50,42.60],[87.50,42.70],[87.50,44.60],[87.50,47.50],[87.50,52.70],[87.50,52.80],[87.50,60.90],[87.50,67.80],[87.50,72.70],[87.50,72.80],[87.50,82.70],[87.50,92.80],
+      [89.60,182.80],[89.70,182.80],[92.70,87.50],[92.70,97.50],[92.70,107.50],[97.50,42.60],[97.50,42.70],[97.50,44.60],[97.50,47.50],[97.50,52.70],[97.50,52.80],[97.50,60.90],[97.50,67.80],[97.50,72.70],[97.50,72.80],[97.50,82.70],[97.50,92.80],
+      [107.50,42.60],[107.50,42.70],[107.50,44.60],[107.50,47.50],[107.50,52.70],[107.50,52.80],[107.50,54.20],[107.50,60.90],[107.50,67.80],[107.50,72.70],[107.50,72.80],[107.50,82.70],[107.50,92.80]
+    ];
+
+    // flatten to single-dimension size pool for pattern generation
+    const flatSizes = Array.from(new Set(sizesPairs.flat())).map(v=>+v).sort((a,b)=>a-b);
+
+    // Predefined canonical sizes to ensure mapping examples are present
+    const canonicalSet = new Set([61.00,43.00,89.70,42.80,54.20,72.70,97.50,107.50]);
+
+    // Color palette for pieces
+    const colors = ['Blue','Yellow','Green','Red','Clear','Smoke','Bronze','Grey'];
+
+    // --- Generate patterns A1..A50 deterministically using provided size pairs ---
+    const patterns = (function(){
+      const out = [];
+      let idx = 0;
+      for(let p=1;p<=50;p++){
+        const pid = 'A'+p;
+        const pieces = [];
+        const types = 2 + (p % 4);
+        for(let t=0;t<types;t++){
+          // pick a pair from sizesPairs deterministically
+          const pair = sizesPairs[(idx++) % sizesPairs.length];
+          const w = +pair[0].toFixed(2);
+          const h = +pair[1].toFixed(2);
+          const color = colors[(p + t) % colors.length];
+          const qty = 1 + ((p * (t+1)) % 12);
+          pieces.push({color, w, h, qty});
+        }
+        const total = pieces.reduce((s,x)=>s + x.qty,0);
+        out.push({id:pid, name:pid, pieces, total});
+      }
+      // ensure some known examples exist
+      if(out[9]){ out[9].pieces.push({color:'Blue', w:42.80, h:87.50, qty:8}); out[9].total = out[9].pieces.reduce((s,x)=>s+x.qty,0); }
+      if(out[19]){ out[19].pieces.push({color:'Green', w:72.60, h:87.50, qty:14}); out[19].total = out[19].pieces.reduce((s,x)=>s+x.qty,0); }
+      return out;
+    })();
+
+    // --- Normalization ---
+    // Sizes within ±TOL cm of a known standard size are treated as that size.
+    const TOL = 0.2; // ±0.2 cm tolerance when matching to standard sizes
+
+    // Build canonical size array from patterns plus explicit canonicalSet
+    const canonicalSizes = (function(){
+      const s = new Set([...canonicalSet]);
+      patterns.forEach(p=>p.pieces.forEach(pc=>{ s.add(+pc.w); s.add(+pc.h); }));
+      const arr = Array.from(s).map(v=>+v).sort((a,b)=>a-b);
+      return arr;
+    })();
+
+    /** Normalize a single dimension (cm)
+     * If within ±TOL of a known standard size, snap to that standard size
+     * (picking the closest one when more than one is within range).
+     * Otherwise return the original value rounded to 2 decimals.
+     */
+    function normalizeDim(val){
+      if(!isFinite(val)) return val;
+      const rounded = +val.toFixed(2);
+      let best = null, bestDist = Infinity;
+      for(const c of canonicalSizes){
+        const d = Math.abs(c - rounded);
+        if(d <= TOL + 1e-9 && d < bestDist){ bestDist = d; best = c; }
+      }
+      return best !== null ? best : rounded;
+    }
+
+    /** Normalize a size pair {w,h} and return {nw,nh} */
+    function normalizePair(w,h){
+      return {nw:normalizeDim(+w), nh:normalizeDim(+h)};
+    }
+
+    // --- Aggregate sizes inside a pattern: group normalized sizes and sum qty ---
+    function aggregatePatternPieces(pattern){
+      // returns map key -> {w,h,color,qty}
+      const map = new Map();
+      for(const pc of pattern.pieces){
+        const nw = normalizeDim(pc.w);
+        const nh = normalizeDim(pc.h);
+        const key = `${nw}x${nh}`;
+        if(!map.has(key)) map.set(key,{w:nw,h:nh,color:pc.color,qty:0});
+        map.get(key).qty += pc.qty;
+      }
+      return Array.from(map.values());
+    }
+
+    // --- Core search algorithm per spec ---
+    /**
+     * For each pattern, find the best matching size (closest to requested normalized size)
+     * Then compute setsNeeded = ceil(needQty / qtyPerSet)
+     * Compute produced, remain, extras from other pieces * setsNeeded
+     */
+    function evaluatePatterns(needW, needH, needQty){
+      const start = performance.now();
+      const norm = normalizePair(needW, needH);
+      const results = [];
+      for(const p of patterns){
+        const agg = aggregatePatternPieces(p);
+        // Both sides are normalized (with ±TOL snapping), so require equality
+        // of the normalized values for both dimensions.
+        const candidates = agg.filter(x=> x.w === norm.nw && x.h === norm.nh);
+        let matched = null;
+        if(candidates.length>0){
+          // choose the candidate closest to the requested normalized size
+          let best=null, bestDist=Infinity;
+          for(const x of candidates){
+            const dw = x.w - norm.nw; const dh = x.h - norm.nh;
+            const dist = Math.hypot(dw,dh);
+            if(dist < bestDist){ bestDist = dist; best = x; }
+            else if(dist === bestDist){
+              // tie-breaker: prefer one listed in canonicalSet or the larger dimension
+              if((canonicalSet.has(x.w) && !canonicalSet.has(best.w)) || x.w > best.w) best = x;
+            }
+          }
+          matched = best;
+        } else {
+          // no normalized match found in this pattern — skip it
+          matched = null;
+        }
+        const qtyPerSet = matched ? matched.qty : 0;
+        if(qtyPerSet<=0) continue; // skip patterns that don't provide the needed piece
+        const sets = Math.ceil(needQty / qtyPerSet);
+        const produced = qtyPerSet * sets;
+        const remain = produced - needQty;
+        // compute extras: all pieces in pattern times sets (excluding matched counted separately)
+        const extras = {};
+        let totalPiecesPerSet = 0;
+        agg.forEach(x=>{ totalPiecesPerSet += x.qty; extras[`${x.w}x${x.h}`] = x.qty * sets; });
+        // total produced across pattern
+        const totalProduced = totalPiecesPerSet * sets;
+        // score: tuple per ranking conditions (sets, remain, excessSheets, totalPieces, patternID)
+        const excessSheets = Object.values(extras).reduce((s,v)=>s + v,0) - needQty; // approximation
+        const score = {sets, remain, excessSheets, totalPieces: totalProduced, id:p.id};
+        results.push({pattern:p, matched, qtyPerSet, sets, produced, remain, extras, totalProduced, score});
+      }
+      const duration = performance.now()-start;
+      return {results,duration};
+    }
+
+    // --- Ranking per criteria ---
+    function rankResults(results){
+      // sort by: 1 sets asc, 2 remain asc, 3 excessSheets asc, 4 totalPieces asc, 5 pattern id asc
+      results.sort((a,b)=>{
+        if(a.sets !== b.sets) return a.sets - b.sets;
+        if(a.remain !== b.remain) return a.remain - b.remain;
+        if((a.score.excessSheets||0) !== (b.score.excessSheets||0)) return (a.score.excessSheets||0) - (b.score.excessSheets||0);
+        if(a.score.totalPieces !== b.score.totalPieces) return a.score.totalPieces - b.score.totalPieces;
+        return a.pattern.id.localeCompare(b.pattern.id);
+      });
+      return results;
+    }
+
+    // --- Render results table safely ---
+    function renderResults(results){
+      const tbody = document.getElementById('resultsBody');
+      tbody.textContent = '';
+      results.forEach(r=>{
+        const tr = el('tr');
+        tr.appendChild(el('td',{},[r.pattern.id]));
+        tr.appendChild(el('td',{},[`${r.matched.w}×${r.matched.h} cm`]));
+        tr.appendChild(el('td',{},[String(document.getElementById('needQty').value || '0')]));
+        tr.appendChild(el('td',{},[String(r.qtyPerSet)]));
+        tr.appendChild(el('td',{},[String(r.sets)]));
+        tr.appendChild(el('td',{},[String(r.produced)]));
+        tr.appendChild(el('td',{},[String(r.remain)]));
+        tr.appendChild(el('td',{},[String(r.score.sets)]));
+        const detailBtn = el('button',{type:'button','class':'btn btn-sm btn-outline-light'},[el('i',{'class':'bi bi-three-dots'})]);
+        detailBtn.addEventListener('click',()=>showDetail(r));
+        const td = el('td'); td.appendChild(detailBtn);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Show pattern details ---
+    function showDetail(r){
+      document.getElementById('detailCard').style.display = 'block';
+      const title = (r && r.pattern && (r.pattern.id || r.pattern.name)) ? (r.pattern.id || r.pattern.name) : 'Custom Pattern';
+      document.getElementById('detailPattern').textContent = title;
+      const container = document.getElementById('detailList');
+      container.textContent = '';
+      // build list of pieces totals after normalization and multiplied by sets
+      const frag = document.createDocumentFragment();
+      const header = el('div',{class:'d-flex justify-content-between fw-bold mb-2'},[el('div',{},['ขนาด']), el('div',{},['จำนวน/ชุด']), el('div',{},['รวม'])]);
+      frag.appendChild(header);
+      let agg = [];
+      if(r && r.prod){
+        // r.prod is map key->qty per set
+        agg = Object.keys(r.prod).map(k=>{ const [w,h] = k.split('x').map(Number); return {w,h,qty: r.prod[k], color:'Custom'}; });
+      } else if(r && r.pattern){
+        agg = aggregatePatternPieces(r.pattern);
+      }
+      agg.forEach(x=>{
+        const row = el('div',{class:'d-flex justify-content-between small-muted mb-1'},[
+          el('div',{},[`${x.w}×${x.h} cm`]),
+          el('div',{},[String(x.qty)]),
+          el('div',{},[String(x.qty * (r.sets||1))])
+        ]);
+        frag.appendChild(row);
+      });
+      const producedSum = agg.reduce((s,x)=>s + x.qty * (r.sets||1), 0);
+      const extraHeader = el('div',{class:'mt-2 small-muted'},[`ผลิตชุด: ${r.sets||1} • ผลิตรวม: ${producedSum} ชิ้น`]);
+      frag.appendChild(extraHeader);
+      container.appendChild(frag);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    // --- UI Actions and multi-request handling ---
+    const btnAdd = document.getElementById('btnAdd');
+    const btnOptimize = document.getElementById('btnOptimize');
+    const btnClearList = document.getElementById('btnClearList');
+    const needQtyInput = document.getElementById('needQty');
+    const requestListEl = document.getElementById('requestList');
+
+    // requests array holds multiple requested items {w,h,qty}
+    const requests = [];
+
+    // render requests table
+    function renderRequests(){
+      requestListEl.textContent = '';
+      requests.forEach((r,i)=>{
+        const tr = el('tr');
+        tr.appendChild(el('td',{},[String(i+1)]));
+        tr.appendChild(el('td',{},[String(r.w)]));
+        tr.appendChild(el('td',{},[String(r.h)]));
+        tr.appendChild(el('td',{},[String(r.qty)]));
+        const removeBtn = el('button',{class:'btn btn-sm btn-outline-danger'},['ลบ']);
+        removeBtn.addEventListener('click', ()=>{ requests.splice(i,1); renderRequests(); });
+        const td = el('td'); td.appendChild(removeBtn);
+        tr.appendChild(td);
+        requestListEl.appendChild(tr);
+      });
+    }
+
+    // add current selection to requests (store cut adjustment)
+    const customWInput = document.getElementById('customW');
+    const customHInput = document.getElementById('customH');
+
+    btnAdd.addEventListener('click', ()=>{
+      const qty = Math.max(1, Math.floor(+needQtyInput.value || 0));
+      if(qty<=0) return alert('กรุณากรอกจำนวนที่ต้องการอย่างน้อย 1');
+
+      const cw = +customWInput.value || 0;
+      const ch = +customHInput.value || 0;
+
+      if(cw <= 0 || ch <= 0) return alert('กรุณาป้อนขนาดกว้างและสูง');
+      const w = cw, h = ch;
+
+      // Do NOT use cut adjustment input when storing requests (per user request)
+      requests.push({w:+w.toFixed(2), h:+h.toFixed(2), qty});
+      renderRequests();
+
+      // clear custom inputs after adding
+      customWInput.value = '';
+      customHInput.value = '';
+    });
+
+    // clear whole list
+    btnClearList.addEventListener('click', ()=>{ requests.length = 0; renderRequests(); document.getElementById('resultsBody').textContent=''; document.getElementById('detailCard').style.display='none'; document.getElementById('reportCard').style.display='none'; });
+
+    // perform evaluation for a single request and return ranked results
+    function evaluateAndRankSingle(req){
+      const {results} = evaluatePatterns(req.w, req.h, req.qty);
+      return rankResults(results);
+    }
+
+    // Render visualization for combined results array [{request, result}]
+    function renderVisuals(combinedResults){
+      const viz = document.getElementById('visualization');
+      viz.textContent = '';
+      if(!combinedResults || combinedResults.length===0) return;
+      combinedResults.forEach((item, idx)=>{
+        const r = item.result;
+        const req = item.request;
+        const card = el('div',{class:'viz-card'},[]);
+        const header = el('div',{class:'d-flex justify-content-between align-items-center mb-2'},[el('div',{},[`คำขอ ${idx+1}: ${req.w}×${req.h} ซม. × ${req.qty}`]), el('div',{},[`แพทเทิร์น ${r.pattern.id} • ชุด ${r.sets} • เหลือ ${r.remain}`])]);
+        card.appendChild(header);
+
+        // aggregate normalized pieces of the pattern (support virtual prod mapping)
+        let agg = [];
+        if(r && r.prod){
+          agg = Object.keys(r.prod).map(k=>{ const [w,h] = k.split('x').map(Number); return {w,h,qty:r.prod[k], color:'Custom'}; });
+        } else if(r && r.pattern){
+          agg = aggregatePatternPieces(r.pattern);
+        }
+        // compute scale to fit boxes: take max dimension among pieces
+        const maxDim = Math.max(...agg.map(a=>Math.max(a.w,a.h)), 1);
+        const scale = Math.min(140 / maxDim, 1); // cap size
+
+        const row = el('div',{class:'pieces-row'},[]);
+        agg.forEach(p=>{
+          const boxW = Math.max(24, Math.round(p.w * scale));
+          const boxH = Math.max(18, Math.round(p.h * scale / 2)); // reduce visual height scale
+          const color = (p.color || 'Grey').toLowerCase();
+          const box = el('div',{class:'piece-box'},[`${p.w}×${p.h}`]);
+          box.style.width = boxW + 'px';
+          box.style.height = boxH + 'px';
+          box.style.background = getColorForName(p.color);
+          box.title = `${p.w}×${p.h} cm • qty/set ${p.qty}`;
+          const badge = el('span',{class:'piece-badge'},[String(p.qty * r.sets)]);
+          box.appendChild(badge);
+          row.appendChild(box);
+        });
+        card.appendChild(row);
+        viz.appendChild(card);
+      });
+    }
+
+    // simple color mapping for piece colors
+    function getColorForName(name){
+      if(!name) return '#cbd5e1';
+      const map = {blue:'#60a5fa',yellow:'#facc15',green:'#34d399',red:'#fb7185',clear:'#f1f5f9',smoke:'#94a3b8',bronze:'#c084fc',grey:'#9ca3af'};
+      return map[(name||'').toLowerCase()] || '#94a3af';
+    }
+
+    // Render sheets layout using a skyline packing heuristic, with an option
+    // to switch to a manual drag-and-drop arrangement mode per sheet.
+    function renderSheetsLayout(items, sheetWcm, sheetHcm){
+      const viz = document.getElementById('visualization');
+      // create a new section
+      const layoutTitle = el('div',{class:'mt-3 mb-2 d-flex justify-content-between align-items-center'},[
+        el('div',{},['การจัดวางบนแผ่น']),
+        el('div',{class:'small-muted'},['ลากชิ้นงานเพื่อจัดวางเอง • คลิก "รีเซ็ต" เพื่อกลับไปใช้การจัดวางอัตโนมัติ'])
+      ]);
+      viz.appendChild(layoutTitle);
+
+      const sheets = packItemsIntoSheets(items, sheetWcm, sheetHcm);
+      // render each sheet
+      sheets.forEach((s, idx)=>{
+        renderOneSheet(viz, s, idx, sheetWcm, sheetHcm);
+      });
+    }
+
+    // Render a single sheet card with draggable pieces. `s.placed` items get
+    // mutated in place when the user drags pieces around (manual arrangement).
+    function renderOneSheet(viz, s, idx, sheetWcm, sheetHcm){
+      const GRID_CM = 1; // snap grid in cm
+
+      const sheetArea = sheetWcm * sheetHcm;
+      function getUtilPct(){ return (s.placed.reduce((a,p)=>a+p.w*p.h,0)/sheetArea*100).toFixed(1); }
+
+      const card = el('div',{class:'viz-card mb-3'},[]);
+      const utilBadge = el('span',{class:'piece-badge ms-2', style:'background:rgba(124,58,237,0.7);font-size:12px;'},['']);
+      function updateUtilBadge(){ utilBadge.textContent = `${getUtilPct()}% ใช้พื้นที่`; }
+      updateUtilBadge();
+      const title = el('div',{class:'d-flex justify-content-between align-items-center mb-2'},[
+        el('div',{style:'display:flex;align-items:center;gap:4px;'},[`แผ่นที่ #${idx+1} (${Math.round(sheetWcm)}×${Math.round(sheetHcm)} cm)`, utilBadge]),
+        el('div',{class:'small-muted'},[`${s.placed.length} ชิ้น`])
+      ]);
+      const resetBtn = el('button',{type:'button', class:'btn btn-sm btn-outline-secondary'},['รีเซ็ตการจัดวาง']);
+      const titleRow = el('div',{class:'d-flex justify-content-between align-items-center mb-2'},[]);
+      titleRow.appendChild(title);
+      titleRow.appendChild(resetBtn);
+      card.appendChild(titleRow);
+
+      // Use the full available container width for the canvas
+      const containerEl = viz.parentElement || viz;
+      const availW = Math.max(containerEl.getBoundingClientRect().width - 32, 600);
+      const canvasW = Math.floor(availW);
+      const canvasH = Math.round(canvasW * (sheetHcm / sheetWcm));
+      const scale = canvasW / sheetWcm;
+      const canvas = el('div',{
+        style:`position:relative;width:100%;padding-bottom:${(sheetHcm/sheetWcm*100).toFixed(4)}%;border:2px solid rgba(255,255,255,0.15);background:#f8fafc;border-radius:6px;overflow:hidden;`
+      },[]);
+      // inner absolute container to hold pieces
+      const canvasInner = el('div',{style:'position:absolute;inset:0;'},[]);
+      canvas.appendChild(canvasInner);
+
+      // keep an original copy so "reset" can restore the auto layout
+      const original = s.placed.map(p=>({...p}));
+
+      function snap(val){
+        return Math.round(val / GRID_CM) * GRID_CM;
+      }
+
+      // Check if a w×h rect can be placed somewhere on the sheet without overlapping
+      // existing pieces. Uses MaxRects best-fit for speed. Returns {x,y} or null.
+      function findFreeSpot(w, h){
+        const mr = MaxRects.fromPlaced(s.placed, sheetWcm, sheetHcm);
+        const pos = mr.findBest(w, h);
+        return pos ? {x: pos.x, y: pos.y} : null;
+      }
+
+      // Scale factor: used for converting cm -> percentage of canvas
+      const pctW = (v) => (v / sheetWcm * 100).toFixed(4) + '%';
+      const pctH = (v) => (v / sheetHcm * 100).toFixed(4) + '%';
+
+      // Color palette for different piece sizes
+      const pieceColorPalette = [
+        {bg:'#bfdbfe',border:'#3b82f6',text:'#1e3a5f'},
+        {bg:'#bbf7d0',border:'#22c55e',text:'#14532d'},
+        {bg:'#fde68a',border:'#f59e0b',text:'#78350f'},
+        {bg:'#fecaca',border:'#ef4444',text:'#7f1d1d'},
+        {bg:'#e9d5ff',border:'#a855f7',text:'#4a1772'},
+        {bg:'#fed7aa',border:'#f97316',text:'#7c2d12'},
+        {bg:'#99f6e4',border:'#14b8a6',text:'#134e4a'},
+        {bg:'#f9a8d4',border:'#ec4899',text:'#831843'},
+      ];
+      const labelColorMap = {};
+      let colorIdx = 0;
+      function getColorForLabel(lbl){
+        if(!labelColorMap[lbl]){ labelColorMap[lbl] = pieceColorPalette[colorIdx++ % pieceColorPalette.length]; }
+        return labelColorMap[lbl];
+      }
+
+      function isColliding(idx, nx, ny, nw, nh){
+        const EPS = 1e-4;
+        for(let i=0; i<s.placed.length; i++){
+          if(i === idx) continue;
+          const p = s.placed[i];
+          const noOverlap = (nx + nw <= p.x + EPS || nx >= p.x + p.w - EPS ||
+                             ny + nh <= p.y + EPS || ny >= p.y + p.h - EPS);
+          if(!noOverlap) return true;
+        }
+        return false;
+      }
+
+      function draw(){
+        canvasInner.textContent = '';
+        s.placed.forEach((p, pi)=>{
+          const c = getColorForLabel(p.label);
+          const fontSize = Math.min(Math.max(p.w / sheetWcm * 100, 0.5), 1.4);
+          // Display the actual placed dimensions (respects rotation).
+          const displayText = `${+p.w.toFixed(2)}×${+p.h.toFixed(2)}`;
+          const div = el('div',{
+            style:`position:absolute;left:${pctW(p.x)};top:${pctH(p.y)};width:${pctW(p.w)};height:${pctH(p.h)};background:${c.bg};border:1px solid ${c.border};display:flex;align-items:center;justify-content:center;font-size:${fontSize}vw;color:${c.text};overflow:hidden;cursor:move;user-select:none;box-sizing:border-box;font-weight:600;`
+          },[displayText]);
+          div.draggable = true;
+          div.dataset.idx = pi;
+
+          // Selection styling
+          if(activePiece && activePiece.s === s && activePiece.pi === pi){
+            div.style.outline = '3px solid #7c3aed';
+            div.style.outlineOffset = '2px';
+            div.style.zIndex = '10';
+            div.style.boxShadow = '0 0 15px rgba(124,58,237,0.5)';
+          }
+
+          div.addEventListener('click', (ev)=>{
+            ev.stopPropagation();
+            const oldActive = activePiece;
+            activePiece = { s, pi, draw, sw: sheetWcm, sh: sheetHcm };
+            if(oldActive && oldActive.draw) oldActive.draw();
+            draw();
+          });
+
+          div.addEventListener('dragstart', (ev)=>{
+            ev.dataTransfer.setData('text/plain', String(pi));
+            // offset between cursor and piece's top-left, in px
+            const rect = div.getBoundingClientRect();
+            ev.dataTransfer.setData('application/x-offset', JSON.stringify({
+              dx: ev.clientX - rect.left,
+              dy: ev.clientY - rect.top
+            }));
+          });
+
+          // double-click to rotate the piece in place
+          div.addEventListener('dblclick', ()=>{
+            const cx = p.x + p.w/2, cy = p.y + p.h/2;
+            const nw = p.h, nh = p.w;
+            let nx = cx - nw/2, ny = cy - nh/2;
+            nx = snap(Math.max(0, Math.min(nx, sheetWcm - nw)));
+            ny = snap(Math.max(0, Math.min(ny, sheetHcm - nh)));
+            
+            if(isColliding(pi, nx, ny, nw, nh)){
+              // If collision occurs, try to find a near spot or just cancel
+              // For rotation, canceling is safest to avoid jumping
+              return; 
+            }
+
+            p.w = nw; p.h = nh; p.x = nx; p.y = ny;
+            draw();
+          });
+
+          // double-click to remove? -> use a small delete button instead
+          // Only pieces that were added on top of the requested list
+          // (filler / manually added extras) can be removed from the sheet.
+          if(p.isFiller){
+            const delBtn = el('div',{
+              style:'position:absolute;top:1px;right:2px;font-size:11px;line-height:1;color:#b91c1c;cursor:pointer;font-weight:bold;'
+            },['×']);
+            delBtn.title = 'ลบชิ้นนี้';
+            delBtn.addEventListener('click', (ev)=>{
+              ev.stopPropagation();
+              s.placed.splice(pi,1);
+              repackSheetBest(s, sheetWcm, sheetHcm, candidateSizes, false);
+              draw();
+              refreshAdderOptions();
+              refreshReport();
+              addStatus.textContent = 'จัดวางใหม่ให้ชิดกันมากขึ้น';
+            });
+            div.appendChild(delBtn);
+          }
+
+          canvasInner.appendChild(div);
+        });
+        updateUtilBadge();
+      }
+
+      canvasInner.addEventListener('dragover', (ev)=>{ ev.preventDefault(); });
+      canvasInner.addEventListener('drop', (ev)=>{
+        ev.preventDefault();
+        const pi = +ev.dataTransfer.getData('text/plain');
+        if(isNaN(pi) || !s.placed[pi]) return;
+        let offset = {dx:0, dy:0};
+        try{ offset = JSON.parse(ev.dataTransfer.getData('application/x-offset')) || offset; }catch(e){}
+        const canvasRect = canvasInner.getBoundingClientRect();
+        const dropPxX = ev.clientX - canvasRect.left - offset.dx;
+        const dropPxY = ev.clientY - canvasRect.top - offset.dy;
+        const curScale = canvasRect.width / sheetWcm;
+        const piece = s.placed[pi];
+        let nx = snap(dropPxX / curScale);
+        let ny = snap(dropPxY / curScale);
+        // clamp within sheet bounds
+        nx = Math.max(0, Math.min(nx, sheetWcm - piece.w));
+        ny = Math.max(0, Math.min(ny, sheetHcm - piece.h));
+        
+        if(!isColliding(pi, nx, ny, piece.w, piece.h)){
+          piece.x = nx; piece.y = ny;
+          draw();
+        }
+      });
+
+      resetBtn.addEventListener('click', ()=>{
+        s.placed = original.map(p=>({...p}));
+        draw();
+        refreshAdderOptions();
+        refreshReport();
+      });
+
+      draw();
+      card.appendChild(canvas);
+
+      // Legend: show unique piece sizes and their colors
+      const legendRow = el('div',{style:'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;'},[]);
+      const legendTitle = el('span',{class:'small-muted me-1'},['สัญลักษณ์: ']);
+      legendRow.appendChild(legendTitle);
+      const legendLabels = [...new Set(s.placed.map(p=>p.label))];
+      legendLabels.forEach(lbl=>{
+        const c = getColorForLabel(lbl);
+        const chip = el('span',{style:`display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:12px;background:${c.bg};border:1px solid ${c.border};color:${c.text};font-weight:600;`},[lbl]);
+        legendRow.appendChild(chip);
+      });
+      card.appendChild(legendRow);
+
+      const hint = el('div',{class:'small-muted mt-1'},['เคล็ดลับ: ลากชิ้นงานเพื่อย้ายตำแหน่ง • ดับเบิลคลิกเพื่อหมุนชิ้นงาน 90° • กด × เพื่อลบ']);
+      card.appendChild(hint);
+
+      // --- Add-piece controls: only list sizes that actually fit in the remaining space ---
+      const addRow = el('div',{class:'d-flex gap-2 align-items-center mt-2 flex-wrap'},[]);
+      const addLabel = el('div',{class:'small-muted'},['เพิ่มชิ้นงาน:']);
+      const addSelect = el('select',{class:'form-select form-select-sm', style:'max-width:240px;'},[]);
+      const addBtn = el('button',{type:'button', class:'btn btn-sm btn-success'},['+ เพิ่มลงแผ่นนี้']);
+      const compactBtn = el('button',{type:'button', class:'btn btn-sm btn-outline-primary'},['จัดชิดที่สุด']);
+      const autoFillBtn = el('button',{type:'button', class:'btn btn-sm btn-warning'},['เติมเต็มอัตโนมัติ']);
+      const addStatus = el('span',{class:'small-muted'},['']);
+      addRow.appendChild(addLabel);
+      addRow.appendChild(addSelect);
+      addRow.appendChild(addBtn);
+      addRow.appendChild(compactBtn);
+      addRow.appendChild(autoFillBtn);
+      addRow.appendChild(addStatus);
+      card.appendChild(addRow);
+
+      // build candidate size list from sizesPairs (unique w x h, including rotation as separate option)
+      function buildCandidateSizes(){
+        const seen = new Set();
+        const list = [];
+        sizesPairs.forEach(([w,h])=>{
+          [[+w,+h],[+h,+w]].forEach(([cw,ch])=>{
+            const key = `${cw.toFixed(2)}x${ch.toFixed(2)}`;
+            if(seen.has(key)) return;
+            seen.add(key);
+            list.push({w:cw, h:ch});
+          });
+        });
+        return list;
+      }
+      const candidateSizes = buildCandidateSizes();
+
+      function refreshAdderOptions(){
+        addSelect.textContent = '';
+        const fitting = candidateSizes.filter(c=> findFreeSpot(c.w, c.h) !== null);
+        if(fitting.length===0){
+          addSelect.appendChild(el('option',{value:''},['-- ไม่มีขนาดที่ใส่ลงไปได้แล้ว --']));
+          addSelect.disabled = true;
+          addBtn.disabled = true;
+          addStatus.textContent = '';
+          return;
+        }
+        addSelect.disabled = false;
+        addBtn.disabled = false;
+        // sort: larger area first (most constrained / useful first), then by width
+        fitting.sort((a,b)=> (b.w*b.h)-(a.w*a.h) || a.w-b.w);
+        fitting.forEach(c=>{
+          const opt = document.createElement('option');
+          opt.value = `${c.w}|${c.h}`;
+          opt.textContent = `${c.w} × ${c.h} cm`;
+          addSelect.appendChild(opt);
+        });
+        addStatus.textContent = `(${fitting.length} ขนาดที่ใส่ได้)`;
+      }
+
+      // Compact: re-pack all current pieces on this sheet as tightly as possible
+      // using MaxRects, preserving each piece's original label.
+      function compactPieces(){
+        if(s.placed.length===0) return 0;
+        // Pass full piece objects so label is preserved through repack
+        const items = s.placed.map(p=>({w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+        const repacked = packWithMaxRects(items, sheetWcm, sheetHcm);
+        s.placed = repacked[0] ? repacked[0].placed.map(p=>({...p})) : [];
+        return s.placed.length;
+      }
+
+      // History of auto-fill arrangements (no longer used — best is selected automatically)
+
+      compactBtn.addEventListener('click', ()=>{
+        compactPieces();
+        draw();
+        refreshAdderOptions();
+        refreshReport();
+        addStatus.textContent = 'จัดชิดเรียบร้อย';
+      });
+
+      addBtn.addEventListener('click', ()=>{
+        const val = addSelect.value;
+        if(!val) return;
+        const [w,h] = val.split('|').map(Number);
+        const spot = findFreeSpot(w,h);
+        if(!spot){
+          alert('ขนาดนี้ไม่สามารถวางลงในพื้นที่ว่างที่เหลือได้แล้ว');
+          refreshAdderOptions();
+          return;
+        }
+        s.placed.push({x:spot.x, y:spot.y, w, h, label:`${w}x${h}`, isFiller:true});
+        repackSheetBest(s, sheetWcm, sheetHcm, candidateSizes, false);
+        draw();
+        refreshAdderOptions();
+        refreshReport();
+        addStatus.textContent = 'จัดวางใหม่ให้ชิดกันมากขึ้น';
+      });
+
+      autoFillBtn.addEventListener('click', ()=>{
+        // คำนวณทุกแบบที่เป็นไปได้ (packing sort x fill order) แล้วเลือกแบบที่ใช้พื้นที่มากที่สุดทันที
+        addStatus.textContent = 'กำลังคำนวณ...';
+        autoFillBtn.disabled = true;
+        setTimeout(()=>{
+          const allCandidates = getAutoFillCandidates(s, sheetWcm, sheetHcm, candidateSizes, new Set());
+          autoFillBtn.disabled = false;
+          if(allCandidates.length === 0){
+            addStatus.textContent = 'ไม่มีพื้นที่ว่างให้เติมเพิ่มแล้ว';
+            return;
+          }
+          // allCandidates เรียง leftover asc แล้ว -> [0] คือดีที่สุด
+          const best = allCandidates[0];
+          s.placed = best.placed.map(p=>({...p}));
+          draw();
+          refreshAdderOptions();
+          refreshReport();
+          const sheetArea = sheetWcm*sheetHcm;
+          const utilPct = (100*(sheetArea - best.leftover)/sheetArea).toFixed(1);
+          const fillerCount = best.placed.filter(p=>p.isFiller).length;
+          const perfectMsg = best.leftover <= PACKING_EPS_AREA ? ' • ไม่เหลือเศษเลย' : '';
+          addStatus.textContent = `เติมเต็มแล้ว: ใช้พื้นที่ ${utilPct}% • เพิ่ม ${fillerCount} ชิ้น (เลือกดีที่สุดจาก ${allCandidates.length} แบบ)${perfectMsg}`;
+        }, 0);
+      });
+
+      refreshAdderOptions();
+
+      viz.appendChild(card);
+    }
+
+    // Pack items into sheets using a Skyline algorithm with rotation support.
+    // This places each piece against the lowest available skyline segment that
+    // fits it best, minimizing wasted gaps compared to simple shelf packing.
+    // `sortFn` controls the order pieces are considered in (defaults to
+    // largest-dimension-first); different orders can yield different sheet counts.
+    function packItemsIntoSheets(items, sheetWcm, sheetHcm, sortFn){
+      const EPS = 1e-6;
+      const defaultSort = (a,b)=> Math.max(b.w,b.h) - Math.max(a.w,a.h);
+      const pool = items.slice().sort(sortFn || defaultSort);
+      const sheets = [];
+
+      function newSheet(){
+        // skyline: array of {x, width, y} segments covering [0, sheetWcm), sorted by x
+        return { placed: [], skyline: [{x:0, width: sheetWcm, y:0}] };
+      }
+      let sheet = newSheet();
+
+      // Find the best position for a w x h rect on the given skyline.
+      // UPGRADE 2: Look-Ahead Height Balancing — บีบให้ชิ้นงานในแถวมีความสูงใกล้เคียงกัน
+      // Score = -(waste) - H_diff_penalty เพื่อเลือกตำแหน่งที่ทำให้แถวมีระดับสม่ำเสมอ
+      // Returns {index, x, y, w, h} or null if it doesn't fit.
+      function findPosition(skyline, w, h){
+        let best = null;
+        for(let i=0;i<skyline.length;i++){
+          const seg = skyline[i];
+          if(seg.width + EPS < w) continue;
+          // determine the height needed: the max y among segments spanned by [seg.x, seg.x+w)
+          let y = seg.y;
+          let spanWidth = 0;
+          let j = i;
+          // track y values of all segments in the span for height-diff penalty
+          const spanYs = [];
+          while(j < skyline.length && spanWidth < w - EPS){
+            y = Math.max(y, skyline[j].y);
+            spanYs.push(skyline[j].y);
+            spanWidth += skyline[j].width;
+            j++;
+          }
+          if(spanWidth + EPS < w) continue;
+          if(y + h > sheetHcm + EPS) continue;
+          // UPGRADE 2: Height uniformity penalty — ยิ่งต่างมาก ยิ่งเสียคะแนน
+          const minY = Math.min(...spanYs);
+          const hDiff = y - minY; // ความต่างของ skyline ในช่วงที่วาง (0=สม่ำเสมอ)
+          const H_PENALTY_WEIGHT = 0.5;
+          const waste = y + hDiff * H_PENALTY_WEIGHT; // lower placement + uniform = better score
+          if(!best || waste < best.waste - EPS || (Math.abs(waste-best.waste)<EPS && seg.width < best.segWidth)){
+            best = {index:i, x:seg.x, y, w, h, waste, segWidth:seg.width};
+          }
+        }
+        return best;
+      }
+
+      // Insert a placed rect into the skyline, updating segments.
+      function updateSkyline(skyline, x, y, w, h){
+        const newSeg = {x, width:w, y:y+h};
+        const result = [];
+        let i=0;
+        // segments entirely before the new rect
+        while(i<skyline.length && skyline[i].x + skyline[i].width <= x + EPS){
+          result.push(skyline[i]); i++;
+        }
+        // handle partial overlap at the start
+        if(i<skyline.length && skyline[i].x < x - EPS){
+          result.push({x:skyline[i].x, width: x - skyline[i].x, y: skyline[i].y});
+        }
+        result.push(newSeg);
+        // skip segments fully covered by the new rect
+        const xEnd = x + w;
+        while(i<skyline.length && skyline[i].x + skyline[i].width <= xEnd + EPS) i++;
+        // handle partial overlap at the end
+        if(i<skyline.length && skyline[i].x < xEnd - EPS){
+          const seg = skyline[i];
+          result.push({x:xEnd, width:(seg.x+seg.width)-xEnd, y:seg.y});
+          i++;
+        }
+        // remaining segments
+        while(i<skyline.length){ result.push(skyline[i]); i++; }
+        // merge adjacent segments with the same y
+        const merged = [];
+        for(const s of result){
+          if(s.width <= EPS) continue;
+          if(merged.length>0 && Math.abs(merged[merged.length-1].y - s.y) < EPS){
+            merged[merged.length-1].width += s.width;
+          } else {
+            merged.push({...s});
+          }
+        }
+        return merged;
+      }
+
+      while(pool.length>0){
+        const it = pool.shift();
+        const w = it.w, h = it.h;
+
+        const posNormal = findPosition(sheet.skyline, w, h);
+        const posRot = (Math.abs(w-h) > EPS) ? findPosition(sheet.skyline, h, w) : null;
+
+        let chosen = null;
+        if(posNormal && posRot){
+          // Best-Area-Fit: prefer the orientation that wastes less height*sheetW area
+          // (lower skyline placement = less wasted area above piece)
+          const wasteNormal = posNormal.waste * sheetWcm;
+          const wasteRot    = posRot.waste    * sheetWcm;
+          const EPS_A = sheetWcm * 0.01; // 1% of sheet width tolerance
+          if(Math.abs(wasteNormal - wasteRot) < EPS_A){
+            // tie: prefer orientation where piece leaves a more square free strip
+            const remHN = sheetHcm - posNormal.y - h;
+            const remHR = sheetHcm - posRot.y    - w;
+            const sqN = remHN > 0 ? Math.abs(sheetWcm - remHN) : Infinity;
+            const sqR = remHR > 0 ? Math.abs(sheetWcm - remHR) : Infinity;
+            chosen = sqR < sqN ? posRot : posNormal;
+          } else {
+            chosen = wasteRot < wasteNormal ? posRot : posNormal;
+          }
+        } else {
+          chosen = posNormal || posRot;
+        }
+
+        if(chosen){
+          sheet.placed.push({x:chosen.x, y:chosen.y, w:chosen.w, h:chosen.h, label: it.label, isFiller: it.isFiller});
+          sheet.skyline = updateSkyline(sheet.skyline, chosen.x, chosen.y, chosen.w, chosen.h);
+        } else {
+          // doesn't fit on current sheet -> start a new sheet
+          if(sheet.placed.length>0) sheets.push(sheet);
+          sheet = newSheet();
+          // pick orientation that fits the fresh sheet, preferring smaller height (less waste)
+          const freshCandidates = [];
+          if(w <= sheetWcm + EPS && h <= sheetHcm + EPS) freshCandidates.push({w, h});
+          if(h <= sheetWcm + EPS && w <= sheetHcm + EPS) freshCandidates.push({w:h, h:w});
+          let pick = freshCandidates.sort((a,b)=>a.h-b.h)[0];
+          if(!pick){
+            // larger than sheet in both orientations: clip to sheet size
+            pick = {w:Math.min(w,sheetWcm), h:Math.min(h,sheetHcm)};
+          }
+          sheet.placed.push({x:0, y:0, w:pick.w, h:pick.h, label: it.label, isFiller: it.isFiller});
+          sheet.skyline = updateSkyline(sheet.skyline, 0, 0, pick.w, pick.h);
+        }
+      }
+      if(sheet.placed.length>0) sheets.push(sheet);
+      return sheets;
+    }
+
+    // get top K candidate patterns for a request
+    function getTopCandidates(req, K=3){
+      const ranked = evaluateAndRankSingle(req);
+      return ranked.slice(0,K);
+    }
+
+    // Merge requests by normalized height/width (normalizeDim already applies
+    // the ±TOL snapping to standard sizes).
+    // Returns array of merged requests {w,h,qty,mergedFrom}
+    function mergeCompatibleRequests(reqs, tol = 0.0){
+      if(!Array.isArray(reqs) || reqs.length===0) return [];
+      // group by normalized height
+      const groups = {};
+      reqs.forEach(r=>{
+        const nh = +normalizeDim(r.h).toFixed(2);
+        if(!groups[nh]) groups[nh]=[];
+        groups[nh].push({w:+r.w, h:nh, qty:+r.qty});
+      });
+      const merged = [];
+      Object.keys(groups).forEach(hk=>{
+        const arr = groups[hk].slice().sort((a,b)=>a.w - b.w);
+        // group by normalized width
+        const widthGroups = {};
+        arr.forEach(item=>{
+          const w = +normalizeDim(item.w).toFixed(2);
+          if(!widthGroups[w]) widthGroups[w] = [];
+          widthGroups[w].push(item);
+        });
+        // For each width group, sum quantities
+        Object.keys(widthGroups).forEach(wk=>{
+          const w = +wk;
+          const totalQty = widthGroups[wk].reduce((s,x)=>s+x.qty, 0);
+          merged.push({w, h:+hk, qty: totalQty, mergedFrom: [w]});
+        });
+      });
+      return merged;
+    }
+
+    // --- Standalone packing helpers (used to auto-fill leftover sheet space) ---
+
+    // Build the list of candidate piece sizes (every size from sizesPairs, plus its
+    // 90°-rotated variant) used when greedily filling leftover sheet space.
+    function buildCandidateSizes(){
+      const seen = new Set();
+      const list = [];
+      sizesPairs.forEach(([w,h])=>{
+        [[+w,+h],[+h,+w]].forEach(([cw,ch])=>{
+          const key = `${cw.toFixed(2)}x${ch.toFixed(2)}`;
+          if(seen.has(key)) return;
+          seen.add(key);
+          list.push({w:cw, h:ch});
+        });
+      });
+      return list;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Maximal-Rectangles free-space tracker.
+    // Maintains the set of maximal free rectangles on a sheet and lets callers
+    // query whether a given piece fits (and where), and update the free-space
+    // after placing a piece. Much faster than grid scanning: O(n²) per
+    // placement instead of O(grid² × pieces).
+    // ──────────────────────────────────────────────────────────────────────────
+    class MaxRects {
+      constructor(W, H){
+        this.W = W; this.H = H;
+        this.free = [{x:0, y:0, w:W, h:H}];
+      }
+      // Clone so we can branch without mutating.
+      clone(){
+        const c = new MaxRects(this.W, this.H);
+        c.free = this.free.map(r=>({...r}));
+        return c;
+      }
+      // Initialise free-space from an existing list of placed pieces.
+      static fromPlaced(placed, W, H){
+        const mr = new MaxRects(W, H);
+        for(const p of placed) mr._place(p.x, p.y, p.w, p.h);
+        return mr;
+      }
+      // Place a rect and update free-space.
+      _place(px, py, pw, ph){
+        const EPS = 1e-6;
+        const newFree = [];
+        for(const r of this.free){
+          // Does the placed rect intersect this free rect?
+          if(px + pw <= r.x + EPS || px >= r.x + r.w - EPS ||
+             py + ph <= r.y + EPS || py >= r.y + r.h - EPS){
+            newFree.push(r); continue;
+          }
+          // Split into up to 4 sub-rects
+          if(px > r.x + EPS)           newFree.push({x:r.x,      y:r.y, w:px-r.x,          h:r.h});
+          if(px+pw < r.x+r.w - EPS)    newFree.push({x:px+pw,    y:r.y, w:(r.x+r.w)-(px+pw),h:r.h});
+          if(py > r.y + EPS)            newFree.push({x:r.x,      y:r.y, w:r.w,             h:py-r.y});
+          if(py+ph < r.y+r.h - EPS)    newFree.push({x:r.x,      y:py+ph,w:r.w,h:(r.y+r.h)-(py+ph)});
+        }
+        // Remove rects that are fully contained in another
+        this.free = newFree.filter((a,i)=>{
+          for(let j=0;j<newFree.length;j++){
+            if(i===j) continue;
+            const b = newFree[j];
+            if(b.x<=a.x+EPS && b.y<=a.y+EPS && b.x+b.w>=a.x+a.w-EPS && b.y+b.h>=a.y+a.h-EPS) return false;
+          }
+          return true;
+        });
+      }
+      // Find the best free rect to place a w×h piece (Best-Area-Fit heuristic).
+      // Returns {x, y, w, h} or null. Considers 90° rotation.
+      findBest(pw, ph){
+        const EPS = 1e-6;
+        let best = null, bestWaste = Infinity, bestSS = Infinity;
+        for(const r of this.free){
+          for(const [fw, fh] of [[pw,ph],[ph,pw]]){
+            if(fw > r.w + EPS || fh > r.h + EPS) continue;
+            const areaWaste = r.w*r.h - fw*fh;
+            const ss = Math.min(r.w-fw, r.h-fh); // short-side leftover (tie-break)
+            if(areaWaste < bestWaste - EPS || (Math.abs(areaWaste-bestWaste)<EPS && ss < bestSS - EPS)){
+              bestWaste = areaWaste; bestSS = ss;
+              best = {x:r.x, y:r.y, w:fw, h:fh};
+            }
+          }
+        }
+        return best;
+      }
+      // Place a piece at the best position and update free-space.
+      // Returns the placement or null if it doesn't fit.
+      placeBest(pw, ph){
+        const pos = this.findBest(pw, ph);
+        if(!pos) return null;
+        this._place(pos.x, pos.y, pos.w, pos.h);
+        return pos;
+      }
+      // Total remaining free area.
+      freeArea(){
+        return this.free.reduce((s,r)=>s+r.w*r.h, 0);
+      }
+    }
+
+    // Find the first free top-left spot on a sheet (given its currently placed
+    // pieces) where a w×h rectangle fits without overlapping.
+    // Uses MaxRects instead of brute-force grid scan — O(n²) not O(grid²×n).
+    function findFreeSpotIn(placed, sheetWcm, sheetHcm, w, h){
+      const mr = MaxRects.fromPlaced(placed, sheetWcm, sheetHcm);
+      const pos = mr.findBest(w, h);
+      return pos ? {x:pos.x, y:pos.y} : null;
+    }
+
+    // Compact a sheet's placed pieces as tightly as possible (skyline re-pack),
+    // preserving each piece's size/label.
+    function compactSheet(s, sheetWcm, sheetHcm){
+      if(s.placed.length===0) return;
+      const items = s.placed.map(p=>({w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+      const repacked = packItemsIntoSheets(items, sheetWcm, sheetHcm);
+      // Only accept the compacted layout if every piece still fits on a
+      // single sheet — otherwise keep the current arrangement so pieces
+      // (especially previously-placed fillers) don't get silently dropped.
+      if(repacked.length === 1 && repacked[0].placed.length === s.placed.length){
+        s.placed = repacked[0].placed.map(p=>({...p}));
+      }
+    }
+
+    // Fill remaining free space on a sheet using Maximal-Rectangles.
+    // Scoring: Best Area Fit (BAF) — choose the (piece × free-rect × orientation)
+    // triple that wastes the least area in the chosen free rectangle. When two
+    // placements waste the same area we break ties by maximising the contact
+    // perimeter with already-placed pieces or sheet edges (contact heuristic),
+    // which keeps pieces packed tightly and avoids isolated "island" gaps.
+    function autoFillSheetSpace(s, sheetWcm, sheetHcm, candidateSizes, orderFn){
+      const mr = MaxRects.fromPlaced(s.placed, sheetWcm, sheetHcm);
+      let added = 0;
+
+      // Pre-sort: largest area first (or custom order) so dominant pieces go first
+      const ordered = candidateSizes.slice().sort(orderFn || ((a,b)=>(b.w*b.h)-(a.w*a.h)||a.w-b.w));
+
+      // Compute how much perimeter of a rect at (x,y,w,h) touches
+      // placed pieces or sheet boundaries — higher = more contact = less waste.
+      function contactScore(px, py, pw, ph){
+        const EPS = 1e-4;
+        let contact = 0;
+        // sheet edges
+        if(Math.abs(px) < EPS)               contact += ph;
+        if(Math.abs(py) < EPS)               contact += pw;
+        if(Math.abs(px+pw - sheetWcm) < EPS) contact += ph;
+        if(Math.abs(py+ph - sheetHcm) < EPS) contact += pw;
+        // placed pieces
+        for(const p of s.placed){
+          const touchLeft   = Math.abs(px - (p.x+p.w)) < EPS;
+          const touchRight  = Math.abs(px+pw - p.x) < EPS;
+          const touchTop    = Math.abs(py - (p.y+p.h)) < EPS;
+          const touchBottom = Math.abs(py+ph - p.y) < EPS;
+          if(touchLeft  || touchRight)  contact += Math.max(0, Math.min(py+ph, p.y+p.h) - Math.max(py, p.y));
+          if(touchTop   || touchBottom) contact += Math.max(0, Math.min(px+pw, p.x+p.w) - Math.max(px, p.x));
+        }
+        return contact;
+      }
+
+      let progress = true;
+      while(progress){
+        progress = false;
+        let bestAreaWaste = Infinity, bestContact = -1, bestPos = null;
+
+        for(const c of ordered){
+          for(const [pw, ph] of [[c.w, c.h],[c.h, c.w]]){
+            if(Math.abs(pw-c.w)<1e-6 && Math.abs(ph-c.h)<1e-6 && pw===ph) {
+              // square — no point trying both orientations
+            }
+            // Find best free-rect for this orientation
+            const EPS = 1e-6;
+            for(const r of mr.free){
+              if(pw > r.w + EPS || ph > r.h + EPS) continue;
+              const areaWaste = r.w*r.h - pw*ph;
+              if(areaWaste > bestAreaWaste + EPS) continue;
+              const ct = contactScore(r.x, r.y, pw, ph);
+              if(areaWaste < bestAreaWaste - EPS || ct > bestContact + EPS){
+                bestAreaWaste = areaWaste;
+                bestContact   = ct;
+                bestPos = {x:r.x, y:r.y, w:pw, h:ph};
+              }
+            }
+          }
+        }
+
+        if(bestPos){
+          mr._place(bestPos.x, bestPos.y, bestPos.w, bestPos.h);
+          // Filler pieces use 'x' separator so they don't accidentally match demand keys
+          // (demand keys also use 'x'). renderReport filters fillers as keys NOT in demandTotals.
+          s.placed.push({x:bestPos.x, y:bestPos.y, w:bestPos.w, h:bestPos.h,
+                         label:`${bestPos.w}x${bestPos.h}`, isFiller:true});
+          added++;
+          progress = true;
+        }
+      }
+      return added;
+    }
+
+    // Run several compact+fill passes on a sheet until the layout stabilizes
+    // (i.e. no more pieces can be added), maximizing space usage.
+    function compactAndFillSheet(s, sheetWcm, sheetHcm, candidateSizes, orderFn){
+      let totalAdded = 0;
+      for(let pass=0; pass<5; pass++){
+        compactSheet(s, sheetWcm, sheetHcm);
+        const added = autoFillSheetSpace(s, sheetWcm, sheetHcm, candidateSizes, orderFn);
+        totalAdded += added;
+        if(added===0) break;
+      }
+      return totalAdded;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // MaxRects primary packer — places every piece using Best-Area-Fit +
+    // Contact-Score from the very first piece, not just during auto-fill.
+    // Returns array of sheets [{placed:[{x,y,w,h,label}]}].
+    // ──────────────────────────────────────────────────────────────────────────
+    function packWithMaxRects(items, sheetW, sheetH, sortFn){
+      const EPS = 1e-6;
+      const pool = items.slice().sort(sortFn || ((a,b)=>(b.w*b.h)-(a.w*a.h)));
+      const sheets = [];
+      let mr = new MaxRects(sheetW, sheetH);
+      let placed = [];
+
+      function contactScore(mr2, placed2, px, py, pw, ph){
+        let c = 0;
+        if(px < EPS)               c += ph;
+        if(py < EPS)               c += pw;
+        if(Math.abs(px+pw-sheetW) < EPS) c += ph;
+        if(Math.abs(py+ph-sheetH) < EPS) c += pw;
+        for(const p of placed2){
+          if(Math.abs(px-(p.x+p.w))<EPS || Math.abs(px+pw-p.x)<EPS)
+            c += Math.max(0, Math.min(py+ph,p.y+p.h)-Math.max(py,p.y));
+          if(Math.abs(py-(p.y+p.h))<EPS || Math.abs(py+ph-p.y)<EPS)
+            c += Math.max(0, Math.min(px+pw,p.x+p.w)-Math.max(px,p.x));
+        }
+        return c;
+      }
+
+      // bestPlacement: unified score = pieceArea + contact×minDim - areaWaste×0.1
+      // แทน lexicographic (waste-first, contact-second) ซึ่งทำให้ contact ถูก ignore เมื่อ waste เท่ากัน
+      function bestPlacement(mr2, placed2, pw, ph){
+        let bestScore = -Infinity, bestPos = null;
+        for(const r of mr2.free){
+          for(const [fw,fh] of [[pw,ph],[ph,pw]]){
+            if(fw>r.w+EPS||fh>r.h+EPS) continue;
+            const areaWaste = r.w*r.h - fw*fh;
+            const ct = contactScore(mr2, placed2, r.x, r.y, fw, fh);
+            // unified score: reward piece area + contact; penalize wasted space in free rect
+            const score = fw*fh + ct*Math.min(fw,fh) - areaWaste*0.1;
+            if(score > bestScore){ bestScore=score; bestPos={x:r.x,y:r.y,w:fw,h:fh}; }
+          }
+        }
+        return bestPos;
+      }
+
+      for(const it of pool){
+        let pos = bestPlacement(mr, placed, it.w, it.h);
+        if(!pos){
+          // start new sheet
+          if(placed.length>0) sheets.push({placed});
+          mr = new MaxRects(sheetW, sheetH);
+          placed = [];
+          pos = bestPlacement(mr, placed, it.w, it.h);
+          if(!pos){
+            // piece larger than sheet — clip
+            pos = {x:0,y:0,w:Math.min(it.w,sheetW),h:Math.min(it.h,sheetH)};
+          }
+        }
+        mr._place(pos.x,pos.y,pos.w,pos.h);
+        // Always keep the original requested label (not the rotated dimensions)
+        // so producedTotals can match demandTotals correctly.
+        placed.push({x:pos.x,y:pos.y,w:pos.w,h:pos.h,label:it.label,origW:it.w,origH:it.h,isFiller:it.isFiller});
+      }
+      if(placed.length>0) sheets.push({placed});
+      return sheets;
+    }
+
+    // Different orderings to try when packing — each can lead to a different
+    // number of sheets / amount of leftover space depending on the size mix.
+    const PACKING_SORT_STRATEGIES = [
+      (a,b)=> Math.max(b.w,b.h) - Math.max(a.w,a.h),           // largest dimension first
+      (a,b)=> (b.w*b.h) - (a.w*a.h),                            // largest area first
+      (a,b)=> Math.min(b.w,b.h) - Math.min(a.w,a.h),            // largest smallest-side first
+      (a,b)=> b.h - a.h,                                        // tallest first
+      (a,b)=> b.w - a.w,                                        // widest first
+      (a,b)=> (b.w/b.h) - (a.w/a.h),                            // most landscape first
+      (a,b)=> Math.abs(1 - b.w/b.h) - Math.abs(1 - a.w/a.h),   // most square first
+    ];
+
+    // Different orderings of the filler candidate sizes to try during
+    // auto-fill. Trying multiple orders lets the search escape local optima
+    // where filling with "largest first" leaves an awkward leftover gap.
+    const FILL_ORDER_STRATEGIES = [
+      (a,b)=> (b.w*b.h) - (a.w*a.h) || a.w - b.w,               // largest area first (default)
+      (a,b)=> (a.w*a.h) - (b.w*b.h) || a.w - b.w,               // smallest area first
+      (a,b)=> Math.max(b.w,b.h) - Math.max(a.w,a.h),            // largest dimension first
+      (a,b)=> Math.min(a.w,a.h) - Math.min(b.w,b.h),            // smallest min-side first
+      (a,b)=> Math.abs(1 - b.w/b.h) - Math.abs(1 - a.w/a.h),    // most square first
+      (a,b)=> (b.w/b.h) - (a.w/a.h),                            // most landscape first
+    ];
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UPGRADE 1: Hyper-Heuristic — วิเคราะห์ features ของชิ้นงานก่อนเลือก strategies
+    // แทนที่จะรัน ALL 7 strategies ทุกครั้ง ระบบจะเลือกเฉพาะ strategies ที่
+    // "ถูกโฉลก" กับลักษณะของชิ้นงาน ประหยัดเวลา และเจาะลึกกลุ่มที่ยาก
+    // ══════════════════════════════════════════════════════════════════════════
+    function analyzeItems(items){
+      if(!items || items.length === 0) return {sdRatio:0, avgAspect:1, hasLong:false, hasTall:false, isUniform:true};
+      const areas  = items.map(it=>it.w*it.h);
+      const aspects = items.map(it=>Math.max(it.w,it.h)/Math.min(it.w,it.h));
+      const meanArea = areas.reduce((s,v)=>s+v,0)/areas.length;
+      const variance = areas.reduce((s,v)=>s+(v-meanArea)**2,0)/areas.length;
+      const sdRatio  = meanArea > 0 ? Math.sqrt(variance)/meanArea : 0;
+      const avgAspect = aspects.reduce((s,v)=>s+v,0)/aspects.length;
+      const hasLong   = items.some(it=>it.w/it.h > 2.5 || it.h/it.w > 2.5);
+      const hasTall   = items.some(it=>it.h > it.w * 1.5);
+      const isUniform = sdRatio < 0.2;
+      return {sdRatio, avgAspect, hasLong, hasTall, isUniform};
+    }
+
+    // ดัชนีชี้กลับไปที่ PACKING_SORT_STRATEGIES array
+    // 0=largestDim, 1=largestArea, 2=largestMinSide, 3=tallest, 4=widest, 5=mostLandscape, 6=mostSquare
+    function selectHyperStrategies(features){
+      const {sdRatio, avgAspect, hasLong, hasTall, isUniform} = features;
+
+      // ชิ้นงานสม่ำเสมอมาก (sd ต่ำ) → ไม่ต้องใช้ many strategies — area+minSide+square เพียงพอ
+      if(isUniform && sdRatio < 0.15) return [1, 2, 6];
+
+      // ชิ้นงานส่วนใหญ่กว้างยาว (landscape) และไม่มีชิ้นสูง
+      if(hasLong && !hasTall) return [4, 5, 0, 1];
+
+      // ชิ้นงานส่วนใหญ่สูง (portrait) และไม่มีชิ้นกว้างยาว
+      if(hasTall && !hasLong) return [3, 0, 2, 1];
+
+      // ชิ้นงาน aspect ratio สูงเฉลี่ย (ทั้ง landscape และ portrait ผสมกัน)
+      if(avgAspect > 2.0) return [0, 3, 4, 5, 1];
+
+      // ชิ้นงานหลากหลายสุด (sdRatio สูง) → ลองทั้ง 7 strategies
+      if(sdRatio > 0.5) return [0, 1, 2, 3, 4, 5, 6];
+
+      // default: กลาง ๆ — ใช้ 5 strategies ที่ครอบคลุม
+      return [0, 1, 2, 3, 6];
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UPGRADE 3: Dead-Space Check — ตรวจก่อนวางว่าพื้นที่ที่เหลือ "ใช้ได้" ไหม
+    // ถ้าเศษ Free Rect ที่แตกออกมาหลังวาง เล็กกว่าชิ้นงานที่เล็กที่สุดในคลัง
+    // ให้หักคะแนนตำแหน่งนั้นเพื่อหลีกเลี่ยงการสร้าง "ขยะพื้นที่"
+    // ══════════════════════════════════════════════════════════════════════════
+    function buildDeadSpaceChecker(candidateSizes){
+      if(!candidateSizes || candidateSizes.length === 0) return ()=>0;
+      // precompute minimum fitting dimensions (both orientations)
+      const minShortSide = Math.min(...candidateSizes.map(c=>Math.min(c.w,c.h)));
+      const minLongSide  = Math.min(...candidateSizes.map(c=>Math.max(c.w,c.h)));
+      const minArea      = Math.min(...candidateSizes.map(c=>c.w*c.h));
+
+      // ตรวจ sub-rects ที่จะเกิดขึ้นจริงหลังวาง piece (w×h) ลงใน freeRect
+      // MaxRects แตกออกมาสูงสุด 4 ชิ้น: left, right, top, bottom
+      return function deadSpacePenalty(freeRect, pw, ph){
+        const EPS = 1e-6;
+        const fx = freeRect.x, fy = freeRect.y, fw = freeRect.w, fh = freeRect.h;
+        const px = fx, py = fy; // วางที่มุมซ้ายบนของ freeRect เสมอ (BAF)
+        let penalty = 0;
+
+        // sub-rect ด้านขวา
+        const rw = fw - pw;
+        if(rw > EPS){
+          const canFit = candidateSizes.some(c=>
+            (c.w <= rw+EPS && c.h <= fh+EPS) || (c.h <= rw+EPS && c.w <= fh+EPS));
+          if(!canFit) penalty += rw * fh;
+        }
+        // sub-rect ด้านล่าง
+        const bh = fh - ph;
+        if(bh > EPS){
+          const canFit = candidateSizes.some(c=>
+            (c.w <= fw+EPS && c.h <= bh+EPS) || (c.h <= fw+EPS && c.w <= bh+EPS));
+          if(!canFit) penalty += fw * bh;
+        }
+        return penalty;
+      };
+    }
+
+    // autoFillSheetSpace แบบ Dead-Space Aware (score ใช้หน่วยเดียวกันทั้งหมด = cm)
+    function autoFillSheetSpaceDS(s, sheetWcm, sheetHcm, candidateSizes, orderFn){
+      const mr = MaxRects.fromPlaced(s.placed, sheetWcm, sheetHcm);
+      let added = 0;
+      const deadCheck = buildDeadSpaceChecker(candidateSizes);
+      const ordered = candidateSizes.slice().sort(orderFn || ((a,b)=>(b.w*b.h)-(a.w*a.h)||a.w-b.w));
+      // normalize factor: max perimeter of sheet (for contact score unit normalizing)
+      const maxPerimeter = 2*(sheetWcm + sheetHcm);
+
+      function contactScore(px, py, pw, ph){
+        const EPS = 1e-4;
+        let contact = 0;
+        if(Math.abs(px) < EPS)               contact += ph;
+        if(Math.abs(py) < EPS)               contact += pw;
+        if(Math.abs(px+pw - sheetWcm) < EPS) contact += ph;
+        if(Math.abs(py+ph - sheetHcm) < EPS) contact += pw;
+        for(const p of s.placed){
+          const touchLeft  = Math.abs(px-(p.x+p.w)) < EPS;
+          const touchRight = Math.abs(px+pw-p.x) < EPS;
+          const touchTop   = Math.abs(py-(p.y+p.h)) < EPS;
+          const touchBot   = Math.abs(py+ph-p.y) < EPS;
+          if(touchLeft || touchRight) contact += Math.max(0,Math.min(py+ph,p.y+p.h)-Math.max(py,p.y));
+          if(touchTop  || touchBot  ) contact += Math.max(0,Math.min(px+pw,p.x+p.w)-Math.max(px,p.x));
+        }
+        return contact;
+      }
+
+      let progress = true;
+      while(progress){
+        progress = false;
+        let bestScore = -Infinity, bestPos = null;
+
+        for(const c of ordered){
+          for(const [pw, ph] of [[c.w,c.h],[c.h,c.w]]){
+            if(pw === ph && pw !== c.w) continue; // square — skip duplicate orientation
+            const EPS = 1e-6;
+            for(const r of mr.free){
+              if(pw > r.w+EPS || ph > r.h+EPS) continue;
+              const pieceArea   = pw * ph;
+              const ct          = contactScore(r.x, r.y, pw, ph);
+              const dsPenalty   = deadCheck(r, pw, ph);
+              // Score: ใช้หน่วยเดียวกัน (cm²) — maximize piece area + contact, penalize dead space
+              // contact normalize เป็น cm² โดยคูณด้วย min dimension ของ piece
+              const score = pieceArea
+                          + ct * Math.min(pw, ph)   // contact weighted by piece thinness
+                          - dsPenalty * 1.5;         // dead space penalty (cm²)
+              if(score > bestScore){
+                bestScore = score;
+                bestPos = {x:r.x, y:r.y, w:pw, h:ph};
+              }
+            }
+          }
+        }
+
+        if(bestPos){
+          mr._place(bestPos.x, bestPos.y, bestPos.w, bestPos.h);
+          s.placed.push({x:bestPos.x, y:bestPos.y, w:bestPos.w, h:bestPos.h,
+                         label:`${bestPos.w}x${bestPos.h}`, isFiller:true});
+          added++;
+          progress = true;
+        }
+      }
+      return added;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UPGRADE 4: Beam Search สำหรับช่วงท้ายแผ่น (พื้นที่เหลือ < BEAM_THRESHOLD)
+    // เมื่อพื้นที่เหลือน้อย Greedy จะตื้อ — ใช้ Beam Search มองล่วงหน้า BEAM_DEPTH ขั้น
+    // เพื่ออุดรูรั่วช่วงท้ายให้แน่นที่สุด
+    // ══════════════════════════════════════════════════════════════════════════
+    const BEAM_THRESHOLD = 0.20; // เปิด Beam Search เมื่อพื้นที่เหลือ < 20%
+    const BEAM_WIDTH     = 5;    // จำนวน branches ที่เก็บไว้ในแต่ละขั้น
+    const BEAM_DEPTH     = 5;    // มองล่วงหน้ากี่ขั้น
+
+    function beamSearchFill(s, sheetWcm, sheetHcm, candidateSizes){
+      const sheetArea = sheetWcm * sheetHcm;
+      const usedNow   = s.placed.reduce((a,p)=>a+p.w*p.h, 0);
+      const freeNow   = sheetArea - usedNow;
+      if(freeNow / sheetArea > BEAM_THRESHOLD) return 0;
+
+      const deadCheck = buildDeadSpaceChecker(candidateSizes);
+
+      // Score function สำหรับ beam (cm²-based, same unit)
+      function evalScore(usedArea, mrFree){
+        const freeArea = mrFree.reduce((s,r)=>s+r.w*r.h,0);
+        // bonus: ยิ่ง free rects น้อย ยิ่งดี (fragmentation ต่ำ)
+        const fragPenalty = mrFree.length * 0.5;
+        return usedArea - fragPenalty;
+      }
+
+      function expand(state){
+        const children = [];
+        const EPS = 1e-6;
+        for(const c of candidateSizes){
+          for(const [pw,ph] of [[c.w,c.h],[c.h,c.w]]){
+            if(pw === ph && pw !== c.w) continue;
+            for(const r of state.mrFree){
+              if(pw > r.w+EPS || ph > r.h+EPS) continue;
+              const dsPenalty = deadCheck(r, pw, ph);
+              const tmpMr = new MaxRects(sheetWcm, sheetHcm);
+              tmpMr.free = state.mrFree.map(fr=>({...fr}));
+              tmpMr._place(r.x, r.y, pw, ph);
+              const newUsed = state.usedArea + pw*ph;
+              children.push({
+                newPieces: [...state.newPieces, {x:r.x, y:r.y, w:pw, h:ph, label:`${pw}x${ph}`, isFiller:true}],
+                mrFree: tmpMr.free,
+                usedArea: newUsed,
+                score: evalScore(newUsed, tmpMr.free) - dsPenalty * 0.5
+              });
+            }
+          }
+        }
+        children.sort((a,b)=>b.score-a.score);
+        // dedup by score bucket + free-rect count
+        const seen = new Set();
+        const deduped = [];
+        for(const ch of children){
+          const key = `${ch.score.toFixed(1)}|${ch.mrFree.length}`;
+          if(!seen.has(key)){ seen.add(key); deduped.push(ch); }
+          if(deduped.length >= BEAM_WIDTH * 3) break;
+        }
+        return deduped;
+      }
+
+      // Seed: เริ่มจากสถานะปัจจุบันหลัง Greedy (ไม่ใช่ empty)
+      let beam = [{
+        newPieces: [],
+        mrFree: MaxRects.fromPlaced(s.placed, sheetWcm, sheetHcm).free,
+        usedArea: usedNow,
+        score: evalScore(usedNow, MaxRects.fromPlaced(s.placed, sheetWcm, sheetHcm).free)
+      }];
+
+      let bestState = beam[0];
+
+      for(let depth = 0; depth < BEAM_DEPTH; depth++){
+        const nextBeam = [];
+        for(const state of beam) nextBeam.push(...expand(state));
+        if(nextBeam.length === 0) break;
+        nextBeam.sort((a,b)=>b.score-a.score);
+        beam = nextBeam.slice(0, BEAM_WIDTH);
+        if(beam[0].usedArea > bestState.usedArea) bestState = beam[0];
+        if(Math.abs(bestState.usedArea - sheetArea) < 1e-3) break;
+      }
+
+      for(const p of bestState.newPieces) s.placed.push(p);
+      return bestState.newPieces.length;
+    }
+
+    // compactAndFillSheet: ใช้ Dead-Space fill ก่อน, Beam Search เฉพาะ pass สุดท้าย
+    function compactAndFillSheetDS(s, sheetWcm, sheetHcm, candidateSizes, orderFn){
+      let totalAdded = 0;
+      const MAX_PASS = 6;
+      for(let pass = 0; pass < MAX_PASS; pass++){
+        compactSheet(s, sheetWcm, sheetHcm);
+        const addedDS = autoFillSheetSpaceDS(s, sheetWcm, sheetHcm, candidateSizes, orderFn);
+        totalAdded += addedDS;
+        if(addedDS === 0){
+          // DS ตัน → เปิด Beam Search ค้นลึก
+          const addedBS = beamSearchFill(s, sheetWcm, sheetHcm, candidateSizes);
+          totalAdded += addedBS;
+          if(addedBS === 0) break; // Beam ก็ไม่ได้อีกแล้ว → หยุด
+          // ถ้า Beam เพิ่มได้ → loop ต่อ (DS อาจใส่ได้อีกในช่องที่เกิดจาก Beam)
+        }
+      }
+      return totalAdded;
+    }
+
+    // Pack items using MaxRects across all sort strategies, pick the result
+    // that uses fewest sheets then least leftover area after auto-fill.
+    const PACKING_EPS_AREA = 1e-3;
+    function packBest(items, sheetWcm, sheetHcm, candidateSizes){
+      // UPGRADE 1: Hyper-Heuristic — เลือกเฉพาะ strategies ที่เหมาะกับชิ้นงาน
+      const features = analyzeItems(items);
+      const selectedIdxs = selectHyperStrategies(features);
+      const selectedStrategies = selectedIdxs.map(i=>PACKING_SORT_STRATEGIES[i]);
+
+      // Phase 1: MaxRects pack กับ strategies ที่ Hyper-Heuristic คัดเลือก
+      const candidates = selectedStrategies.map(sortFn=>({
+        sortFn,
+        sheets: packWithMaxRects(items, sheetWcm, sheetHcm, sortFn)
+      }));
+      const minCount = Math.min(...candidates.map(c=>c.sheets.length));
+
+      // Phase 2: auto-fill simulation บน tied-best strategies ด้วย Dead-Space + Beam Search
+      let bestSheets = null, bestLeftover = Infinity;
+      for(const c of candidates){
+        if(c.sheets.length > minCount) continue;
+        const sheetsCopy = c.sheets.map(s=>({placed: s.placed.map(p=>({...p}))}));
+        // ใช้ compactAndFillSheetDS แทนของเดิม
+        sheetsCopy.forEach(s=> compactAndFillSheetDS(s, sheetWcm, sheetHcm, candidateSizes));
+        let usedArea = 0;
+        sheetsCopy.forEach(s=> s.placed.forEach(p=> usedArea += p.w*p.h));
+        const leftoverArea = (c.sheets.length * sheetWcm * sheetHcm) - usedArea;
+        if(!bestSheets || leftoverArea < bestLeftover - PACKING_EPS_AREA){
+          bestSheets = sheetsCopy; bestLeftover = leftoverArea;
+        }
+      }
+      return bestSheets;
+    }
+
+    // Re-optimize the layout of a SINGLE sheet using all of its currently
+    // placed pieces (including any filler pieces already added). Tries every
+    // packing order in PACKING_SORT_STRATEGIES, fills the remaining gaps of
+    // each with the best-fitting filler sizes, and keeps whichever resulting
+    // arrangement leaves the least empty space. Used after the user adds or
+    // removes a piece so the sheet is always re-packed for maximum coverage.
+    // Generate all distinct auto-fill arrangements (packing sort x fill order),
+    // deduplicated by leftover area + piece multiset, sorted best (least
+    // leftover) first. Stops collecting once a zero-leftover arrangement is
+    // found (further searching can't improve on that).
+    function getAutoFillCandidates(s, sheetWcm, sheetHcm, candidateSizes, externalSeen){
+      const items = s.placed.map(p=>({w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+      const sheetArea = sheetWcm*sheetHcm;
+      const results = [];
+      const seen = externalSeen || new Set();
+
+      for(const sortFn of PACKING_SORT_STRATEGIES){
+        const sheets = packWithMaxRects(items, sheetWcm, sheetHcm, sortFn);
+        if(sheets.length !== 1) continue;
+        const basePlaced = sheets[0].placed.map(p=>({x:p.x, y:p.y, w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+
+        for(const orderFn of FILL_ORDER_STRATEGIES){
+          const candidate = {placed: basePlaced.map(p=>({...p}))};
+          compactAndFillSheetDS(candidate, sheetWcm, sheetHcm, candidateSizes, orderFn);
+          const used = candidate.placed.reduce((a,p)=>a+p.w*p.h,0);
+          const leftover = sheetArea - used;
+
+          // Dedup key: leftover (rounded) + sorted multiset of placed piece sizes
+          const sizeKey = candidate.placed
+            .map(p=>`${p.w.toFixed(2)}x${p.h.toFixed(2)}`)
+            .sort().join(',');
+          const key = `${leftover.toFixed(2)}|${sizeKey}`;
+          if(seen.has(key)) continue;
+          seen.add(key);
+
+          results.push({placed: candidate.placed, leftover});
+        }
+      }
+
+      results.sort((a,b)=> a.leftover - b.leftover);
+      return results;
+    }
+
+    function repackSheetBest(s, sheetWcm, sheetHcm, candidateSizes, fillGaps=true){
+      if(!s.placed || s.placed.length===0) return;
+      const items = s.placed.map(p=>({w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+      let best = null, bestLeftover = Infinity;
+      const sheetArea = sheetWcm*sheetHcm;
+
+      // ใช้ Hyper-Heuristic เลือก packing strategies แทน brute-force ทั้ง 7
+      const hhIdxs = selectHyperStrategies(analyzeItems(items));
+      const hhStrategies = hhIdxs.map(i=>PACKING_SORT_STRATEGIES[i]);
+      // เลือก fill orders เฉพาะที่ "สลับกัน" พอ (ไม่ต้องลอง 6 แบบทุกครั้ง)
+      const fillOrders = [FILL_ORDER_STRATEGIES[0], FILL_ORDER_STRATEGIES[1], FILL_ORDER_STRATEGIES[4]];
+
+      outer:
+      for(const sortFn of hhStrategies){
+        const sheets = packWithMaxRects(items, sheetWcm, sheetHcm, sortFn);
+        if(sheets.length !== 1) continue;
+        const basePlaced = sheets[0].placed.map(p=>({x:p.x, y:p.y, w:p.w, h:p.h, label:p.label, isFiller:p.isFiller}));
+
+        if(!fillGaps){
+          if(!best){ best = basePlaced; }
+          continue;
+        }
+
+        for(const orderFn of fillOrders){
+          const candidate = {placed: basePlaced.map(p=>({...p}))};
+          compactAndFillSheetDS(candidate, sheetWcm, sheetHcm, candidateSizes, orderFn);
+          const used = candidate.placed.reduce((a,p)=>a+p.w*p.h,0);
+          const leftover = sheetArea - used;
+          if(leftover < bestLeftover - PACKING_EPS_AREA){
+            best = candidate.placed; bestLeftover = leftover;
+          }
+          if(bestLeftover <= PACKING_EPS_AREA) break outer;
+        }
+      }
+
+      if(best){
+        s.placed = best;
+      } else if(fillGaps){
+        // Fallback: keep current arrangement, just try to fill remaining gaps.
+        compactAndFillSheetDS(s, sheetWcm, sheetHcm, candidateSizes);
+      }
+    }
+
+    // Optimize combined assignment across all requests to try to eliminate leftovers.
+    // This builds a demand map across normalized sizes and uses a greedy integer covering
+    // heuristic to choose integer sets of patterns to satisfy demands (or minimize leftover).
+    function optimizeCombined(){
+      if(requests.length===0){ alert('กรุณาเพิ่มคำขออย่างน้อยหนึ่งรายการใน List'); return; }
+
+      const SHEET_W_CM = isSheetRotated ? 182.88 : 243.84;
+      const SHEET_H_CM = isSheetRotated ? 243.84 : 182.88;
+
+      // Expand all requests into individual piece instances.
+      // ไม่ pre-sort ที่นี่ — packBest จะ sort ตาม strategy ของแต่ละ Hyper-Heuristic run เอง
+      const sizeGroups = {};
+      requests.forEach(r=>{
+        const nw = +normalizeDim(r.w), nh = +normalizeDim(r.h);
+        const key = `${nw}x${nh}`;
+        if(!sizeGroups[key]) sizeGroups[key] = {w:nw, h:nh, count:0};
+        sizeGroups[key].count += r.qty;
+      });
+      const allPieces = [];
+      Object.values(sizeGroups).forEach(g=>{
+        const label = `${g.w}x${g.h}`;
+        for(let i=0;i<g.count;i++) allPieces.push({w:g.w, h:g.h, label});
+      });
+
+      // Try several packing arrangements (different sort orders) and pick the
+      // one that uses the fewest sheets / least leftover space
+      const candidateSizes = buildCandidateSizes();
+      // Hyper-Heuristic analysis
+      const hhFeatures = analyzeItems(allPieces);
+      const hhIdxs = selectHyperStrategies(hhFeatures);
+      const hhNames = ['LargestDim','LargestArea','LargestMinSide','Tallest','Widest','Landscape','Square'];
+      const hhSelected = hhIdxs.map(i=>hhNames[i]).join(', ');
+      const packedSheets = packBest(allPieces, SHEET_W_CM, SHEET_H_CM, candidateSizes);
+      // Note: packBest already runs compactAndFillSheet on the winning strategy internally.
+
+      // Count totals — use the original label key (set at request time) so that
+      // rotated pieces still count toward the correct size bucket.
+      let totalProduced = 0;
+      const producedTotals = {};
+      packedSheets.forEach(s=>{
+        s.placed.forEach(p=>{
+          // label is "NWxNH" from the original request; filler pieces use "W×H" (× not x)
+          // Normalise both separators to 'x' for consistent keying.
+          const k = (p.label||`${p.w}x${p.h}`).replace('×','x');
+          producedTotals[k] = (producedTotals[k]||0) + 1;
+          totalProduced++;
+        });
+      });
+
+      // Check unmet — keys use 'x' separator to match producedTotals
+      const demandTotals = {};
+      requests.forEach(r=>{ const k = `${normalizeDim(r.w)}x${normalizeDim(r.h)}`; demandTotals[k]=(demandTotals[k]||0)+r.qty; });
+      const unmetList = {};
+      for(const k of Object.keys(demandTotals)){
+        const have = producedTotals[k]||0;
+        if(have < demandTotals[k]) unmetList[k] = demandTotals[k] - have;
+      }
+      const totalRequested = Object.values(demandTotals).reduce((s,v)=>s+v,0);
+      const totalLeft = totalProduced - totalRequested;
+
+      // Render results table
+      const tbody = document.getElementById('resultsBody'); tbody.textContent = '';
+      packedSheets.forEach((s, idx)=>{
+        const sheetSummary = {};
+        s.placed.forEach(p=>{ const k=`${p.w}×${p.h}`; sheetSummary[k]=(sheetSummary[k]||0)+1; });
+        const tr = el('tr');
+        tr.appendChild(el('td',{},[`แผ่น #${idx+1}`]));
+        tr.appendChild(el('td',{},[Object.entries(sheetSummary).map(([k,v])=>`${k}×${v}`).join(', ')]));
+        tr.appendChild(el('td',{},['']));
+        tr.appendChild(el('td',{},['']));
+        tr.appendChild(el('td',{},[String(1)]));
+        tr.appendChild(el('td',{},[String(s.placed.length)]));
+        tr.appendChild(el('td',{},[String(0)]));
+        tr.appendChild(el('td',{},['']));
+        const td = el('td');
+        const btn = el('button',{class:'btn btn-sm btn-outline-light'},['รายละเอียด']);
+        btn.addEventListener('click',()=>{
+          const prod = {};
+          s.placed.forEach(p=>{ const k=`${p.w}x${p.h}`; prod[k]=(prod[k]||0)+1; });
+          showDetail({pattern:{id:`แผ่น #${idx+1}`,name:`แผ่น #${idx+1}`,pieces:[]}, prod, sets:1});
+        });
+        td.appendChild(btn); tr.appendChild(td);
+        tbody.appendChild(tr);
+      });
+
+      // Summary row
+      const sumTr = el('tr',{class:'table-primary'});
+      sumTr.appendChild(el('td',{colspan:2},['รวม']));
+      sumTr.appendChild(el('td',{},['']));
+      sumTr.appendChild(el('td',{},['']));
+      sumTr.appendChild(el('td',{},[String(packedSheets.length)+' แผ่น']));
+      sumTr.appendChild(el('td',{},[String(totalProduced)+' ชิ้น']));
+      sumTr.appendChild(el('td',{},[String(totalLeft)]));
+      sumTr.appendChild(el('td',{},['']));
+      sumTr.appendChild(el('td',{},['']));
+      tbody.appendChild(sumTr);
+
+      // Render sheet layouts
+      document.getElementById('visualization').textContent = '';
+      const hhBadge = el('span',{class:'small-muted ms-2',style:'font-size:11px;background:rgba(124,58,237,0.2);padding:2px 8px;border-radius:8px;'},
+        [`🧠 HH: ${hhSelected} | Dead-Space ✓ | Beam Search ✓`]);
+      const layoutTitle = el('div',{class:'mt-3 mb-2 d-flex justify-content-between align-items-center'},[
+        el('div',{style:'font-weight:600;display:flex;align-items:center;gap:6px;'},['การจัดวางตัดกระจก', hhBadge]),
+        el('div',{class:'small-muted'},['ลากชิ้นงานเพื่อจัดวางเอง • ดับเบิลคลิกเพื่อหมุน'])
+      ]);
+      document.getElementById('visualization').appendChild(layoutTitle);
+      packedSheets.forEach((s, idx)=>{
+        s.placed.forEach(p=>{ if(!p.label) p.label=`${p.w}×${p.h}`; });
+        renderOneSheet(document.getElementById('visualization'), s, idx, SHEET_W_CM, SHEET_H_CM);
+      });
+
+      lastOptContext = {packedSheets, demandTotals, totalRequested};
+      refreshReport();
+    }
+
+    // Recompute produced totals from the current state of all sheets
+    // (this reflects any manual edits / auto-fill additions on each sheet).
+    function computeProduction(packedSheets){
+      let totalProduced = 0;
+      const producedTotals = {};
+      packedSheets.forEach(s=>{
+        s.placed.forEach(p=>{
+          // Use label (original requested size key) so rotated pieces match demand.
+          // Filler pieces have label "W×H" — normalise separator to 'x'.
+          const k = (p.label||`${p.w}x${p.h}`).replace('×','x');
+          producedTotals[k] = (producedTotals[k]||0) + 1;
+          totalProduced++;
+        });
+      });
+      return {producedTotals, totalProduced};
+    }
+
+    // Recompute and re-render the report using the latest sheet layouts.
+    // Called after the user adds/removes/auto-fills pieces on any sheet.
+    function refreshReport(){
+      if(!lastOptContext) return;
+      const {packedSheets, demandTotals, totalRequested} = lastOptContext;
+      const {producedTotals, totalProduced} = computeProduction(packedSheets);
+      const unmetList = {};
+      for(const k of Object.keys(demandTotals)){
+        const have = producedTotals[k] || 0;
+        if(have < demandTotals[k]) unmetList[k] = demandTotals[k] - have;
+      }
+      const totalLeft = totalProduced - totalRequested;
+      renderReport({packedSheets, totalProduced, totalRequested, totalLeft, producedTotals, demandTotals, unmetList});
+    }
+
+    // Render the auto-fill report card: sheets used, produced vs requested, leftovers per size
+    function renderReport({packedSheets, totalProduced, totalRequested, totalLeft, producedTotals, demandTotals, unmetList}){
+      const reportCard = document.getElementById('reportCard');
+      const summary = document.getElementById('reportSummary');
+      const leftoverEl = document.getElementById('reportLeftover');
+      summary.textContent = '';
+      leftoverEl.textContent = '';
+
+      const stat = (label, value, extraClass='')=> el('div',{class:'col-6 col-md-3'},[
+        el('div',{class:'p-2 rounded-sm viz-card text-center'},[
+          el('div',{class:'small-muted'},[label]),
+          el('div',{class:`fw-bold ${extraClass}`,style:'font-size:1.25rem'},[String(value)])
+        ])
+      ]);
+
+      summary.appendChild(stat('จำนวนแผ่นที่ใช้', packedSheets.length + ' แผ่น'));
+      summary.appendChild(stat('ผลิตได้', totalProduced + ' ชิ้น'));
+      summary.appendChild(stat('ต้องการ', totalRequested + ' ชิ้น'));
+      summary.appendChild(stat('เศษเหลือรวม', totalLeft + ' ชิ้น', totalLeft>0?'text-success':(totalLeft<0?'text-danger':'')));
+      // Overall space utilization
+      const sheetW = isSheetRotated ? 182.88 : 243.84;
+      const sheetH = isSheetRotated ? 243.84 : 182.88;
+      const sheetArea = sheetW * sheetH;
+      const usedArea = packedSheets.reduce((s,sh)=>s+sh.placed.reduce((a,p)=>a+p.w*p.h,0),0);
+      const totalArea = packedSheets.length * sheetArea;
+      const utilPct = totalArea > 0 ? (usedArea/totalArea*100).toFixed(1) : '0.0';
+      summary.appendChild(stat('ใช้พื้นที่รวม', utilPct + '%', parseFloat(utilPct)>=85?'text-success':parseFloat(utilPct)>=70?'text-warning':'text-danger'));
+
+      // Per-size breakdown for requested sizes: produced, requested, leftover
+      const tbl = el('table',{class:'table table-sm table-hover mt-2 mb-0'});
+      const thead = el('thead',{class:'table-light'},[el('tr',{},[
+        el('th',{},['ขนาด (กว้าง×สูง ซม.)']),
+        el('th',{},['ต้องการ']),
+        el('th',{},['ผลิตได้']),
+        el('th',{},['เศษเหลือ'])
+      ])]);
+      const tbody = el('tbody');
+      Object.keys(demandTotals).sort().forEach(k=>{
+        const need = demandTotals[k] || 0;
+        const made = producedTotals[k] || 0;
+        const left = made - need;
+        const sizeLabel = k.replace('x','×');
+        const leftCell = el('td',{class: left<0 ? 'text-danger fw-bold' : (left>0 ? 'text-success' : '')},[String(left)]);
+        tbody.appendChild(el('tr',{},[
+          el('td',{},[sizeLabel]),
+          el('td',{},[String(need)]),
+          el('td',{},[String(made)]),
+          leftCell
+        ]));
+      });
+      tbl.appendChild(thead); tbl.appendChild(tbody);
+      leftoverEl.appendChild(tbl);
+
+      // Filler pieces: sizes that were produced/added but were not part of
+      // the original request (e.g. added via "เติมเต็มอัตโนมัติ" / "+ เพิ่มลงแผ่นนี้")
+      const fillerKeys = Object.keys(producedTotals).filter(k=>!demandTotals[k]).sort();
+      if(fillerKeys.length>0){
+        const fillerTotal = fillerKeys.reduce((s,k)=>s+producedTotals[k],0);
+        const fillerTitle = el('div',{class:'small-muted mt-3 mb-1'},[`ชิ้นเติมเต็มเพิ่มเติม (ใช้พื้นที่เหลือ) • รวม ${fillerTotal} ชิ้น`]);
+        leftoverEl.appendChild(fillerTitle);
+        const ftbl = el('table',{class:'table table-sm table-hover mb-0'});
+        const fthead = el('thead',{class:'table-light'},[el('tr',{},[
+          el('th',{},['ขนาด (กว้าง×สูง ซม.)']),
+          el('th',{},['จำนวน'])
+        ])]);
+        const ftbody = el('tbody');
+        fillerKeys.forEach(k=>{
+          ftbody.appendChild(el('tr',{},[
+            el('td',{},[k.replace('x','×')]),
+            el('td',{},[String(producedTotals[k])])
+          ]));
+        });
+        ftbl.appendChild(fthead); ftbl.appendChild(ftbody);
+        leftoverEl.appendChild(ftbl);
+      }
+
+      if(Object.keys(unmetList).length>0){
+        const warn = el('div',{class:'small-muted mt-2 text-danger'},['⚠ มีบางขนาดที่ผลิตไม่พอ: ' + Object.entries(unmetList).map(([k,v])=>`${k.replace('x','×')} ขาด ${v}`).join(', ')]);
+        leftoverEl.appendChild(warn);
+      }
+
+      reportCard.style.display = 'block';
+    }
+
+    // Optimize combined requests (merge + minimal cut)
+    btnOptimize.addEventListener('click', ()=>{
+      if(requests.length===0){
+        return alert('กรุณาเพิ่มคำขอรายการอย่างน้อยหนึ่งรายการก่อน!');
+      }
+      document.getElementById('resultsBody').textContent = '';
+      document.getElementById('detailCard').style.display = 'none';
+      document.getElementById('visualization').textContent = '';
+      optimizeCombined();
+    });
+
+    // Rotate sheet orientation toggle
+    const rotateSheetBtn = document.getElementById('rotateSheet');
+    rotateSheetBtn.addEventListener('click', ()=>{
+      isSheetRotated = !isSheetRotated;
+      
+      // Update label text showing current primary dimensions
+      const dimLabel = document.getElementById('sheetDimensionsLabel');
+      if(dimLabel){
+        const w = isSheetRotated ? 182.88 : 243.84;
+        const h = isSheetRotated ? 243.84 : 182.88;
+        dimLabel.textContent = `แผ่นแม่: ${w} × ${h} cm • คำนวณการจัดวางอัตโนมัติ`;
+      }
+      
+      // Visual state feedback on the button itself
+      if(isSheetRotated){
+        rotateSheetBtn.classList.remove('btn-outline-primary');
+        rotateSheetBtn.classList.add('btn-primary');
+      } else {
+        rotateSheetBtn.classList.remove('btn-primary');
+        rotateSheetBtn.classList.add('btn-outline-primary');
+      }
+
+      // Re-trigger layout optimization if requests are present
+      if(requests.length > 0){
+        document.getElementById('resultsBody').textContent = '';
+        document.getElementById('detailCard').style.display = 'none';
+        document.getElementById('visualization').textContent = '';
+        optimizeCombined();
+      }
+    });
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', ()=>{
+      const el = document.body;
+      const isDark = el.getAttribute('data-theme') === 'dark';
+      el.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    });
+
+    // --- Exports ---
+    // Export results JSON
+    function exportJSON(){
+      const rows = Array.from(document.querySelectorAll('#resultsBody tr')).map(tr=>({
+        pattern: tr.cells[0].textContent,
+        matchedSize: tr.cells[1].textContent,
+        need: tr.cells[2].textContent,
+        qtyPerSet: tr.cells[3].textContent,
+        sets: tr.cells[4].textContent,
+        produced: tr.cells[5].textContent,
+        remain: tr.cells[6].textContent
+      }));
+      const blob = new Blob([JSON.stringify(rows, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'gpo_results.json'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // Export Excel using SheetJS
+    document.getElementById('btnExportExcel').addEventListener('click', ()=>{
+      const wb = XLSX.utils.book_new();
+      const rows = Array.from(document.querySelectorAll('#resultsBody tr')).map(tr=>[
+        tr.cells[0].textContent, tr.cells[1].textContent, tr.cells[2].textContent, tr.cells[3].textContent, tr.cells[4].textContent, tr.cells[5].textContent, tr.cells[6].textContent
+      ]);
+      const ws = XLSX.utils.aoa_to_sheet([['แพทเทิร์น','ขนาดที่จับคู่','ต้องการ','จำนวน/ชุด','ชุด','ผลิตได้','เหลือ'], ...rows]);
+      XLSX.utils.book_append_sheet(wb, ws, 'ผลลัพธ์');
+      XLSX.writeFile(wb, 'gpo_results.xlsx');
+    });
+
+    // Export PDF using jsPDF
+    document.getElementById('btnExportPdf').addEventListener('click', async ()=>{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({orientation:'landscape'});
+      const rows = Array.from(document.querySelectorAll('#resultsBody tr')).map(tr=>[
+        tr.cells[0].textContent, tr.cells[1].textContent, tr.cells[2].textContent, tr.cells[3].textContent, tr.cells[4].textContent, tr.cells[5].textContent, tr.cells[6].textContent
+      ]);
+      doc.setFontSize(12);
+      doc.text('ตัวช่วยจัดแพทเทิร์นกระจก - ผลลัพธ์',14,14);
+      // simple table render
+      const startY = 24; let y = startY;
+      doc.setFontSize(10);
+      doc.text(['แพทเทิร์น','ขนาด','ต้องการ','จำนวน/ชุด','ชุด','ผลิตได้','เหลือ'].join(' | '),14,y); y+=6;
+      rows.forEach(r=>{ doc.text(r.join(' | '),14,y); y+=6; if(y>190){ doc.addPage(); y=14; } });
+      doc.save('gpo_results.pdf');
+    });
+
+    // Print
+    function doPrint(){ window.print(); }
+    document.getElementById('btnPrint').addEventListener('click', doPrint);
+
+    // --- Import JSON ---
+    function importJSON(file){
+      const reader = new FileReader();
+      reader.onload = e=>{
+        try{
+          const data = JSON.parse(e.target.result);
+          // optional: merge into patterns
+          alert('นำเข้าแล้ว '+ (Array.isArray(data)? data.length : '1') + ' รายการ (ยังไม่ได้รวมอัตโนมัติ)');
+        }catch(err){ alert('ไฟล์ JSON ไม่ถูกต้อง'); }
+      };
+      reader.readAsText(file);
+    }
+
+    // Drag & drop import (optional)
+    document.addEventListener('paste', (ev)=>{
+      // placeholder for quick paste import
+    });
+
+    // --- Initial demo search on load ---
+    window.addEventListener('load', ()=>{
+      computeStats();
+      // run default search
+      // performSearch();
+    });
+
+    // --- Keyboard Movement ---
+    document.addEventListener('keydown', (ev)=>{
+      if(!activePiece) return;
+      const {s, pi, draw, sw, sh} = activePiece;
+      const p = s.placed[pi];
+      if(!p) return;
+
+      const GRID_CM = 1;
+      let nx = p.x, ny = p.y;
+      
+      if(ev.key === 'ArrowLeft')  nx -= GRID_CM;
+      else if(ev.key === 'ArrowRight') nx += GRID_CM;
+      else if(ev.key === 'ArrowUp')    ny -= GRID_CM;
+      else if(ev.key === 'ArrowDown')  ny += GRID_CM;
+      else if(ev.key === 'Escape'){ activePiece = null; draw(); return; }
+      else return;
+
+      ev.preventDefault();
+
+      nx = Math.max(0, Math.min(nx, sw - p.w));
+      ny = Math.max(0, Math.min(ny, sh - p.h));
+
+      function checkCollision(idx, x, y, w, h){
+        const EPS = 1e-4;
+        for(let i=0; i<s.placed.length; i++){
+          if(i === idx) continue;
+          const op = s.placed[i];
+          const noOverlap = (x + w <= op.x + EPS || x >= op.x + op.w - EPS ||
+                             y + h <= op.y + EPS || y >= op.y + op.h - EPS);
+          if(!noOverlap) return true;
+        }
+        return false;
+      }
+
+      if(!checkCollision(pi, nx, ny, p.w, p.h)){
+        p.x = nx; p.y = ny;
+        draw();
+      }
+    });
+
+  </script>
+</body>
+</html>
